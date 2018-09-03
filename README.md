@@ -219,23 +219,23 @@ app.use(async function(ctx){
 	})
 
 // use callback form (compatible with expressjs middlewares)
-app.useCb(function(req, res, next){
+app.use(function(req, res, next){
 	# logic
 	})
-app.useCb(expressjsMiddleware())
+app.use(expressjsMiddleware())
 
 // add middleware to a specific route and its subroutes
 app.use('/route', function(ctx){})
-app.useCb('/route', function(req, res, next){})
+app.use('/route', function(req, res, next){})
 
 app
 	.all('/route') // add on all routes
 		.use(function(ctx){})
-		.useCb(function(req, res, next){})
+		.use(function(req, res, next){})
 		.end
 	.get('/route2') // add middleware on this route and its subroutes
 		.use(function(ctx){})
-		.useCb(function(req, res, next){})
+		.use(function(req, res, next){})
 		.end
 	// use none popular http method (other then: GET, HEAD and POST)
 	.method('copy', 'route', function(ctx){})
@@ -288,11 +288,9 @@ app
 	// use simple params
 	.get('/users/:uid/books/:bookId')
 	.get('/files/{category}/{filename}')
-	.get('/articles/:category/{name:/^[a-z]+$/}-{id:/^[0-9]{2}$/}.html')
-	.get('/articles/:category/{name:objectId}-{id:number}.html')
+	.get('/articles/:category/{:/(?<name>[0-9a-f]+)-(?<id>\d{2}).html/})
 	// params using regex
-	.get({
-		path: '/users/:uid/books/:bookId',
+	.get('/users/:uid/books/:bookId',{
 		params:{
 			uid: /^[a-z]$/i,
 			bookId: /^[0-9]{10}$/,
@@ -307,7 +305,7 @@ app
 			uid: Model.required.ObjectId
 		},
 		// handler
-		handler: function(ctx){}
+		handler: function(ctx, uid='default value', bookIdk=Express.re)){}
 	})
 // Regex: will not be indexed!
 	.get(/\/[0-9]{15}$/, function(){})
@@ -357,9 +355,12 @@ ctx
 		.some param
 	/**
 	 * send data to the client
+	 * depends on http header "accept" and the query param "type"
+	 * (sends JSON, XML, Text or render an HTML page)
 	 * @param {string|buffer} data
 	 */
 	.send(data)
+	.send('templateName', date)
 	/**
 	 * Serialize response as json and send it to client
 	 * @param {serializable data} data
