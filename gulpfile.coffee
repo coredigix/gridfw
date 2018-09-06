@@ -6,9 +6,7 @@ rename			= require "gulp-rename"
 coffeescript	= require 'gulp-coffeescript'
 PluginError		= gulp.PluginError
 
-
-# compile coffeescript
-gulp.task 'compile-coffee', ->
+compileCoffee = ->
 	gulp.src 'assets/**/[!_]*.coffee', nodir: true
 	.pipe include hardFail: true
 	.pipe coffeescript(bare: true).on 'error', gutil.log
@@ -17,6 +15,6 @@ gulp.task 'compile-coffee', ->
 
 
 # default task
-gulp.task 'default', ['compile-coffee'], ->
+gulp.task 'default', gulp.series compileCoffee, ->
 	gulp.watch ['assets/**/*.coffee'], ['compile-coffee']
 	return

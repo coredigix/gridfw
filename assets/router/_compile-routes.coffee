@@ -58,7 +58,7 @@ _splitRoute = (route, cb)->
 			lastPos = pos + 1
 		# break loop when ends
 		++pos
-		if pos is len
+		if pos >= len
 			break
 	# last peace of string
 	if lastPos < len
