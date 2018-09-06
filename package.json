@@ -23,5 +23,13 @@
   "bugs": {
     "url": "https://github.com/coredigix/gridfw/issues"
   },
-  "homepage": "https://github.com/coredigix/gridfw#readme"
+  "homepage": "https://github.com/coredigix/gridfw#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "gulp": "^4.0.0",
+    "gulp-coffeescript": "0.0.15",
+    "gulp-include": "^2.3.1",
+    "gulp-rename": "^1.4.0",
+    "gulp-util": "^3.0.8"
+  }
 }

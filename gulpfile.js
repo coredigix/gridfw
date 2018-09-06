@@ -1,4 +1,4 @@
-var PluginError, coffeescript, gulp, gutil, include, rename;
+var PluginError, coffeescript, compileCoffee, gulp, gutil, include, rename;
 
 gulp = require('gulp');
 
@@ -13,18 +13,19 @@ coffeescript = require('gulp-coffeescript');
 
 PluginError = gulp.PluginError;
 
-// compile coffeescript
-gulp.task('compile-coffee', function() {
+compileCoffee = function() {
   return gulp.src('assets/**/[!_]*.coffee', {
     nodir: true
   }).pipe(include({
     hardFail: true
-  })).pipe(coffeescript({
+  })).pipe(gulp.dest('builde')).pipe(coffeescript({
     bare: true
   }).on('error', gutil.log)).pipe(gulp.dest('build')).on('error', gutil.log);
-});
+};
+
+gulp.task('coffee', compileCoffee);
 
 // default task
-gulp.task('default', ['compile-coffee'], function() {
-  gulp.watch(['assets/**/*.coffee'], ['compile-coffee']);
-});
+gulp.task('default', gulp.series(compileCoffee, function() {
+  gulp.watch(['assets/**/*.coffee'], compileCoffee);
+}));
