@@ -1,7 +1,9 @@
 ###*
  * build handler for "Router::on" method
+ * @private
  * @example
  * router.on('GET', '/route')
+ * 		.use(middleware)
  * 		.then(handler)
  * 		.then(handler, errHandler)
  * 		.catch(errHandler)
@@ -22,6 +24,22 @@ class _OnHandlerBuilder
 		# in case of global handlers (post process and error handler)
 		@finally = []
 		@catch = []
+		# middlewares
+		@middleware= []
+		# fire build if not explicitly called
+		@_buildTimeout = setTimeout (=> do @build), 0
+		return
+	###*
+	 * Build handler and returns to parent object
+	 * @return {Object} parent object
+	###
+	build: ->
+		# cancel auto build
+		clearTimeout @_buildTimeout
+		# send response to parent object
+		@cb this
+		# return parent object
+		@_parent
 	###*
 	 * then
 	###
@@ -56,14 +74,11 @@ class _OnHandlerBuilder
 			@then handler, handler
 		else
 			@finally.push handler
-
 	###*
-	 * Build handler and returns to parent object
-	 * @return {Object} parent object
+	 * middlewares
 	###
-	build: ->
-		# return parent object
-		@_parent
+	use: (middleware)->
+		@middleware.push middleware
 ###*
  * create route and return to parent object
 ###

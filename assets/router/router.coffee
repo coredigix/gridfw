@@ -48,7 +48,9 @@ class Router
 			# router.on(type, route)
 			# router.on('GET', '/example').then(handler).end
 			when 2
-
+				new _OnHandlerBuilder this, (options)->
+					# add handlers
+					if options.promise
 			# default: error
 			else
 				throw new Error 'Illegal arguments length'
