@@ -1,3 +1,18 @@
+
+###*
+ * Add route
+ * @private
+ * @param  {[type]} type    [description]
+ * @param  {[type]} route   [description]
+ * @param  {[type]} handler [description]
+ * @return {[type]}         [description]
+###
+_AppendHandler= (router, type, route, handler)->
+
+
+
+
+
 ###*
 this function will compiles routes into usable format
 @private

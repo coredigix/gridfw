@@ -1,0 +1,6 @@
+###*
+ * context var
+###
+
+class context
+	

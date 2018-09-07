@@ -2,10 +2,10 @@
 ###
 @example
 * /path/to/resource
-* /users/:uid/books/:bookId
-* /files/{category}/{filename}
-* /files/{category}/{filename:/^\d$/}
-* /articles/:category/{:/(?<name>[0-9a-f]+)-(?<id>\d{2}).html/}
+* /users/:user/books/:book
+* /users/:user/*
+*
+* /:/:/:
 ###
 
 routes =
@@ -25,6 +25,8 @@ routes =
 	n: 'param name' # name: in case of param
 	c: function(ctx){} # check function, in case of param
 
+	loglevel: 'warn' # log level
+
 	# sub nodes
 	n:
 		name2: [{ROUTE}]
@@ -34,5 +36,5 @@ routes =
 		{ROUTE}
 	]
 
-	# middlewars
-	m
+	# middlewars: list of middlewares tobe used
+	m: []
