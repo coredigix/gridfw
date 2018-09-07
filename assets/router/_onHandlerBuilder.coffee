@@ -20,12 +20,13 @@ class _OnHandlerBuilder
 	###
 	constructor: (@_parent ,@cb)->
 		# store promise handlers in case of promise architecture
-		@promise = []
+		@promiseQueu = []
 		# in case of global handlers (post process and error handler)
-		@finally = []
-		@catch = []
+		@postHandlers	= []
+		@preHandlers	= []
+		@errHandlers	= []
 		# middlewares
-		@middleware= []
+		@middlewares	= []
 		# fire build if not explicitly called
 		@_buildTimeout = setTimeout (=> do @build), 0
 		return
@@ -42,6 +43,9 @@ class _OnHandlerBuilder
 		@_parent
 	###*
 	 * then
+	 * @example
+	 * .then (ctx)->
+	 * .then ( (ctx)-> ), ( (ctx{error})-> )
 	###
 	then: (handler, errHandler)->
 		throw new Error 'Handler expected function' unless !handler or typeof handler is 'function'
@@ -49,36 +53,82 @@ class _OnHandlerBuilder
 		# expect no global error handler or post handler is added
 		throw new Error 'Illegal use of promise handlers, please see documentation' if @finally.length or @catch.length
 		# append as promise or error handler
-		@promise.push [handler, errHandler]
+		@promiseQueu.push [handler, errHandler]
 		# return "this" to enable chain
 		this
 	###*
 	 * catch
 	 * Add "Promise catch" handler or "error handling" handler
 	 * @param {function} errHandler - Error handler
+	 * @example
+	 * .catch (ctx{error})->
 	###
 	catch: (errHandler)->
 		throw new Error 'Handler expected function' unless typeof handler is 'function'
 		if @promise.length
 			@then null, errHandler
 		else
-			@catch.push errHandler
+			@errHandlers.push errHandler
+		# return "this" for chain
+		this
 	###*
 	 * finally
 	 * Add promise finally or post process handler
 	 * @param {function} handler - Promise finally or post process handler
+	 * @example
+	 * .finally (ctx)->
 	###
 	finally: (handler)->
 		throw new Error 'Handler expected function' unless typeof handler is 'function'
 		if @promise.length
 			@then handler, handler
 		else
-			@finally.push handler
+			@postHandlers.push handler
+		# return "this" for chain
+		this
 	###*
 	 * middlewares
+	 * @example
+	 * .use (ctx)->
+	 * .use (ctx, res, next)-> # express compatible format, best to use it only with express middlewares
+	 * .use (err, ctx, res, next)-> # express error handler compatible format, best to use it only with express middlewares
 	###
 	use: (middleware)->
-		@middleware.push middleware
+		throw new Error 'middleware expected function' unless typeof middleware is 'function'
+		# Gridfw format
+		if middleware.length is 1
+			@middlewares.push middleware
+		# compatibility with express
+		else if middleware.length is 3
+			@middlewares.push (ctx)->
+				new Promise (resolve, reject)->
+					middleware ctx, ctx.res, (err)->
+						if err then reject err
+						else resolve()
+		# express error handler
+		#TODO check if this error handler is compatible
+		else if middleware.length is 4
+			@errHandlers.push (ctx)->
+				new Promise (resolve, reject)->
+					middleware ctx.error, ctx, ctx.res, (err)->
+						if err then reject err
+						else resolve()
+		# Uncknown format
+		else
+			throw new Error 'Illegal middleware format'
+		# return "this" for chain
+		this
+	###*
+	 * preHandlers
+	 * @example
+	 * .filter (ctx)->
+	###
+	filter: (handler)->
+		throw new Error 'Filter expected function' unless typeof handler is 'function'
+		@preHandlers.push handler
+		# return "this" for chain
+		this
+
 ###*
  * create route and return to parent object
 ###
