@@ -3,4 +3,4 @@
 ###
 
 class GridFW
-	
+	constructor: (@settings)->

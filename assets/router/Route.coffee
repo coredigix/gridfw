@@ -1,8 +1,47 @@
 ###*
  * Route
+ * @todo add route.path to get full descriptor path of this route
 ###
 
+fastDecode = require 'fast-decode-uri-component'
+
 class Route
+	###*
+	 * [constructor description]
+	 * @param {Route} parent - parent Route object
+	 * @param {boolean} attached - if the node is attached, when false, lazy attach, ie: attach when some operation and has parent(add handler, ...)
+	 * @type {[type]}
+	###
+	constructor: (@parent, @attached) ->
+		# init attributes with undefined value
+		undefined_ =
+			value: undefined
+			configurable: true
+			writable: true
+		# sub routes
+		Object.defineProperties this,
+			### static name sub routes ###
+			[FIXED_SUB_ROUTE]:		value: {}
+			### parametred sub routes ###
+			[PARAMETRED_SUB_ROUTE]:	value: []
+			###*
+			 * param handlers
+			 * @example
+			 * # Add handler
+			 * 		route.params.paramName = function(ctx){}
+			 * 		route.params.paramName = async function(ctx){}
+			 * # remove param hander
+			 * 		delete route.params.paramName
+			 * # check if route has param handler
+			 * 		if route.params.paramName
+			 * 		if route.params.hasOwnProperrty('paramName')
+			###
+			params: value: {}
+			### name of the route, undefined when it a parametred route ###
+			name: undefined_
+			### param name (case of parametred route )###
+			paramName: undefined_
+
 	###*
 	 * Router events
 	 * @param {string | list<string>} method - http methods
@@ -30,7 +69,8 @@ class Route
 	 * 		.finally(handler)	# post process handler
 	 * @example Sub routes
 	 * route.on('GET', '/sub-route', handler)
-	 * route.on('GET', '/sub-route').then(handler)
+	 * route.on('GET', '/sub-route')
+	 * 		.then(handler)
 	###
 	on: (method, handler, extra)->
 		switch arguments.length
@@ -74,59 +114,198 @@ class Route
 	 * route.off() # remove all handlers
 	 * router.off('GET') # remove all GET handlers
 	 * router.off(['GET', 'POST']) # remove all GET handlers
-	 * router.off('GET', handler) # remove this handler from 'GET' method
 	 * router.off(handler) # remove this handler from all methods
-	 * 
-	 * router.off('GET', Route.MIDDLEWARE) remove all middlewares from get method
-	 * router.off('GET', Route.MIDDLEWARE, handler) remove this middle ware
 	 * router.off(Route.MIDDLEWARE) remove all middleware from this route
-	 * router.off([Route.MIDDLEWARE, Route.PRE_PROCESS]) remove all middleware from this route
+	 * 
+	 * router.off('GET', handler) # remove this handler from 'GET' method
+	 * router.off('GET', Route.MIDDLEWARE) remove all middlewares from get method
 	 * router.off(Route.MIDDLEWARE, hander) remove this middleware from this route
+	 * 
+	 * router.off('GET', Route.MIDDLEWARE, handler) remove this middle ware
 	###
 	off: (method, type, handler)->
 		switch arguments.length
-			# off()
 			# remove all handlers
 			when 0
-				@off HTTP_METHODS
-			# off('GET')
-			# off(['GET'])
-			# off(handler)
-			# off([handler])
-			# off(Route.MIDDLEWARE)
-			# off([Route.MIDDLEWARE])
+				# off()
+				@off HTTP_METHODS, ROUTE_ALL
 			when 1
-				if typeof type is 'number'
-					@off HTTP_METHODS, type
-				else if typeof type is 'string'
-
-				else if typeof type is 'function'
-					@off HTTP_METHODS, ROUTE_HANDLER, type
-				else if Array.isArray type
-					for v in type
-						@off v
-			# off('GET', Route.MIDDLEWARE, handler)
-			# off(['GET', 'POST'], [Route.MIDDLEWARE, Route.HANDLER], handler)
+				# off(Route.MIDDLEWARE)
+				if typeof method is 'number'
+					@off HTTP_METHODS, ROUTE_ALL, method
+				# off(handler)
+				else if typeof method is 'function'
+					@off HTTP_METHODS, ROUTE_ALL, method
+				# off('GET')
+				# off(['GET'])
+				else if typeof method is 'string' or Array.isArray method
+					@off method, ROUTE_ALL
+				else throw new Error "Illegal Argument #{method}"
 			when 2
-
-
-
+				if typeof type is 'function'
+					# off(Route.MIDDLEWARE, hander)
+					if typeof method is 'number'
+						@off HTTP_METHODS, method, type
+					# off('GET', handler)
+					else
+						@off method, ROUTE_ALL, type
+				# off('GET', Route.MIDDLEWARE)
+				else if typeof type is 'number'
+					throw new Error "Illegal type: #{type}" unless typeof type is 'number'
+					_rmRouteHandlers this, method, type
+				else throw new Error "Illegal arguments: #{arguments}"
+			when 3
+				throw new Error "Illegal type: #{type}" unless typeof type is 'number'
+				throw new Error "Illegal handler: #{handler}" unless typeof handler is 'function'
+				# off('GET', Route.MIDDLEWARE, handler)
+				_rmRouteHandlers this, method, type, handler
 		# chain
 		this
 
+	###*
+	 * add listener to all routes
+	 * @example
+	 * route.all()
+	 * 		.then(handler)
+	 * route.all(handler)
+	 * route.all()
+	 * 		.then(handler)
+	 * route.all('/example', handler)
+	 * route.all(['/example'], handler)
+	 * route.all('/example')
+	 * 		.then(handler)
+	###
+	all: (subRoute, handler)->
+		switch arguments.length
+			# all()
+			when 0
+				@on HTTP_METHODS
+			# all('/subRoute')
+			# all(handler)
+			when 1
+				@on HTTP_METHODS, subRoute
+			# all('/subroute', handler)
+			when 2
+				@on HTTP_METHODS, subRoute, handler
+			else
+				throw new Error 'Illegal arguments count'
 
-ROUTE_PROTO = Route.prototype
-###*
- * consts
-###
+	###*
+	 * Find sub route / lazy create sub route
+	 * note particular nodes:
+	 * 		+ empty text as node name
+	 * 			Could not have sub nodes
+	 * 			exists when trailing slashes is enabled
+	 * 			represent the trailing slash node
+	 * 		+ "*" node
+	 * 			has no sub nodes
+	 * 			matches all sub URL
+	 * 			has the lowest priority
+	 * @param {string} route - sub route path
+	 * @example
+	 * route.route('/subRoute')
+	###
+	route: (route)->
+		throw new Error "Route expected string, found: #{route}" unless typeof route is 'string'
+		settings = @app.settings
+		# remove end spaces and starting slash
+		route = route.trimRight()
+		if route.startsWith '/'
+			route = route.substr 1
+		# if ends with "/" is ignored, removeit
+		unless settings.trailingSlash
+			if route.endsWith '/'
+				route = route.slice 0, -1
+		# if empty, keep current node
+		currentRouteNode = this
+		if route
+			# split into tokens
+			route = route.split '/'
+			# find route
+			for token in route
+				# <!> param names are case sensitive!
+				# param
+				cRoute = null
+				if token.startsWith ':'
+					for rout in currentRouteNode[PARAMETRED_SUB_ROUTE]
+						if rout.param is token
+							cRoute = rout
+							break
+					# found
+					if cRoute
+						currentRouteNode = cRoute
+					else
+						currentRouteNode = new Route currentRouteNode, false
+						currentRouteNode.paramName = token
+				# fixed name
+				else
+					# replace "\:" with ":"
+					if token.startsWith '\\:'
+						token = token.substr 1
+					# when route isn't case sensitive
+					if settings.routeIgnoreCase
+						token = token.toLowerCase()
+					# decode token
+					token = fastDecode token
+					# find route
+					cRoute = currentRouteNode[FIXED_SUB_ROUTE][token]
+					# create route if not exist
+					if cRoute
+						currentRouteNode = cRoute
+					else
+						currentRouteNode = new Route currentRouteNode, false
+						currentRouteNode.name = token
+		# return route node
+		currentRouteNode
+
+	###*
+	 * find route by URL
+	 * @param {string} path find sub route based on that path
+	###
+	find: (path)->
+		#TODO
+
+	###*
+	 * Attach route
+	 * case of lazy add, or attach this node to other parent node
+	 * when node has multiple parents, it will has "parent" as array of all parent node
+	 * and "path" to null
+	 * @optional @param {Route} parent - node to attach to
+	###
+	attach: (parent)->
+		#TODO
+		# enable chain
+		this
+	###*
+	 * detach node from parent
+	 * when no parent is specified, detach from all parents
+	 * @optional @param  {Route} parent - node to detach from
+	###
+	detach: (parent)->
+		#TODO
+		# enable chain
+		this
+
+
+
+### Route Prototype ###
+HTTP_METHODS = http.METHODS
+
+### Route handlers ###
 ROUTE_PROTO.HANDLER		= ROUTE_HANDLER		= 0
 ROUTE_PROTO.MIDDLEWARE	= ROUTE_MIDDLEWARE	= 1
 ROUTE_PROTO.PRE_PROCESS	= ROUTE_PRE_PROCESS	= 2
 ROUTE_PROTO.POST_PROCESS= ROUTE_POST_PROCESS= 3
 ROUTE_PROTO.ERR_HANDLER	= ROUTE_ERR_HANDLER	= 4
-ROUTE_PROTO.ALL			= -1
+ROUTE_PROTO.ALL			= ROUTE_ALL = -1
 
-HTTP_METHODS = http.METHODS
+### sub routes ###
+FIXED_SUB_ROUTE			= Symbol 'static routes'
+PARAMETRED_SUB_ROUTE	= Symbol 'parameted routes'
+PARAM_HANDLERS			= Symbol 'param handlers'
+
+### others ###
+ROUTE_PROTO = Route.prototype
 
 ###*
  * build handler
@@ -209,7 +388,74 @@ _routeAppendHandler = (route, method, type, handler)->
 			[] # ROUTE_ERR_HANDLER
 		]
 		# add handler
-		methodObj[type].push handler
+		arr = methodObj[type]
+		throw new Error "Illegal type: #{type}" unless arr?
+		arr.push handler
+	return
+
+###*
+ * remove route handlers
+###
+_rmRouteHandlers = (currentRoute, method, type, handler)->
+	if Array.isArray method
+		for v in method
+			_rmRouteHandlers currentRoute, v, type, handler
+	else
+		throw new Error "Illegal http method #{method}" unless typeof method is 'string' and method in HTTP_METHODS
+		# method key
+		method = '_' + method.toUpperCase()
+		methodObj = currentRoute[method]
+		if methodObj
+			# remover
+			remover = (arr)=>
+				# remove handler only
+				if handler
+					loop
+						idx = arr.indexOf handler
+						if idx is -1
+							break
+						arr.splice idx, 1
+				# remove all handlers
+				else
+					arr.length = 0
+			# remove
+			if type is ROUTE_ALL
+				for arr in methodObj
+					remover arr
+			else
+				arr= methodObj[type]
+				throw new Error "Illegal type: #{type}" unless arr?
+				remover arr
 	return
 
 
+###*
+ * shorthand routes
+ * @example
+ * route.get()
+ * 		.then(handler)
+ * 		
+ * route.get(handler)
+ * route.get('/subRoute')
+ * 		.then(handler)
+ * 
+ * route.get('/route', handler)
+ * route.get(['/route', '/route2'], handler)
+###
+HTTP_METHODS.forEach (method)->
+	Object.defineProperty ROUTE_PROTO, method,
+		value: (route, handler)->
+			switch arguments.length
+				when 0
+					@on method
+				when 1
+					@on method, route
+				when 2
+					@on method, route, handler
+				else
+					throw new Error 'Illegal arguments count'
+
+# 
+# 
+# 
+# Add param hand
