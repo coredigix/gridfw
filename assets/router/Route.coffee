@@ -1,6 +1,19 @@
 ###*
  * Route
  * @todo add route.path to get full descriptor path of this route
+ *
+ * @author COREDIGIX
+ * @copyright 2018
+ * @format
+ * node
+ * 		[FIXED_SUB_ROUTE]
+ * 			name: {RouteNode}
+ * 			name2: {RouteNode}
+ * 		#parametred routes (this architecture to boost performance)
+ * 		[SR_PARAM_NAMES] : [paramName1, ...]
+ * 		[SR_PARAM_REGEXES] : [paramRegex1, ...]
+ * 		[SR_PARAM_NODES] : [paramNode1, ...]
+ * 
 ###
 
 fastDecode = require 'fast-decode-uri-component'
@@ -9,10 +22,9 @@ class Route
 	###*
 	 * [constructor description]
 	 * @param {Route} parent - parent Route object
-	 * @param {boolean} attached - if the node is attached, when false, lazy attach, ie: attach when some operation and has parent(add handler, ...)
 	 * @type {[type]}
 	###
-	constructor: (@parent, @attached) ->
+	constructor: (parent, lazyName, lazyParam) ->
 		# init attributes with undefined value
 		undefined_ =
 			value: undefined
@@ -20,27 +32,43 @@ class Route
 			writable: true
 		# sub routes
 		Object.defineProperties this,
-			### static name sub routes ###
-			[FIXED_SUB_ROUTE]:		value: {}
-			### parametred sub routes ###
-			[PARAMETRED_SUB_ROUTE]:	value: []
-			###*
-			 * param handlers
-			 * @example
-			 * # Add handler
-			 * 		route.params.paramName = function(ctx){}
-			 * 		route.params.paramName = async function(ctx){}
-			 * # remove param hander
-			 * 		delete route.params.paramName
-			 * # check if route has param handler
-			 * 		if route.params.paramName
-			 * 		if route.params.hasOwnProperrty('paramName')
-			###
-			params: value: {}
+			### parent route node ###
+			parent:
+				value: parent
+				configurable: true
+				writable: true
+			### @private static name sub routes ###
+			[FIXED_SUB_ROUTE]:	value: {}
+			### @private parametred sub routes ###
+			[SR_PARAM_NAMES]:	value: []
+			[SR_PARAM_NODES]:	value: []
+			[SR_PARAM_REGEXES]:	value: []
 			### name of the route, undefined when it a parametred route ###
 			name: undefined_
 			### param name (case of parametred route )###
 			paramName: undefined_
+			### parents: in case node is attached to multiple parents ###
+			parents: value: if parent then [parent] else []
+			### lazy append ###
+			lazyAttach: undefined_
+			###
+			param manger for this route and it's subroutes
+			@private
+			###
+			[ROUTE_PARAM_REGEXES]: undefined_
+			[ROUTE_PARAM_HANDLERS]: undefined_
+
+		# Route lazy add
+		if lazyName or lazyParam
+			throw new Error 'Lazy mode needs parent node' unless parent
+			# check
+			if lazyName
+				throw new Error 'Route name expected string' unless typeof lazyName is 'string'
+				throw new Error 'Could not set route name and param at the same time' if lazyParam
+			else
+				throw new Error 'Route param name expected string' unless typeof lazyParam is 'string'
+			# add as lazy
+			@lazyAttach: [parent, lazyName, lazyParam]
 
 	###*
 	 * Router events
@@ -207,6 +235,7 @@ class Route
 	###
 	route: (route)->
 		throw new Error "Route expected string, found: #{route}" unless typeof route is 'string'
+		throw new Error "Illegal route: #{route}" if REJ_ROUTE_REGEX.test route
 		settings = @app.settings
 		# remove end spaces and starting slash
 		route = route.trimRight()
@@ -225,18 +254,16 @@ class Route
 			for token in route
 				# <!> param names are case sensitive!
 				# param
-				cRoute = null
 				if token.startsWith ':'
-					for rout in currentRouteNode[PARAMETRED_SUB_ROUTE]
-						if rout.param is token
-							cRoute = rout
-							break
-					# found
-					if cRoute
-						currentRouteNode = cRoute
+					token = token.substr 1
+					# relations are stored as array (for performance)
+					# [0]: contains param name
+					# [1]: contains reference to route object
+					idx = currentRouteNode[SR_PARAM_NAMES].indexOf token
+					if idx is -1
+						currentRouteNode = new Route currentRouteNode, null, token
 					else
-						currentRouteNode = new Route currentRouteNode, false
-						currentRouteNode.paramName = token
+						currentRouteNode = currentRouteNode[SR_PARAM_NODES][idx]
 				# fixed name
 				else
 					# replace "\:" with ":"
@@ -253,39 +280,89 @@ class Route
 					if cRoute
 						currentRouteNode = cRoute
 					else
-						currentRouteNode = new Route currentRouteNode, false
-						currentRouteNode.name = token
+						currentRouteNode = new Route currentRouteNode, token
 		# return route node
 		currentRouteNode
 
 	###*
-	 * find route by URL
-	 * @param {string} path find sub route based on that path
-	###
-	find: (path)->
-		#TODO
-
-	###*
 	 * Attach route
 	 * case of lazy add, or attach this node to other parent node
-	 * when node has multiple parents, it will has "parent" as array of all parent node
-	 * and "path" to null
-	 * @optional @param {Route} parent - node to attach to
+	 * @optional @param {Route node} parent - node to attach to
+	 * @optional @param {string} name - node name
+	 * @optional @param {string} paramName - node param name (in case of parametred route)
+	 * @example
+	 * attach(parent)  # if node is lazy, the attachement will be when node change state to active
+	 * attach()	# if node is lazy, change it state to active, and index it inside all parents
+	 * this will propagate to lazy parents to (will change to active too)
 	###
-	attach: (parent)->
-		#TODO
+	attach: (parent, nodeName, nodeParamName)->
+		parentNodes = @parent
+		# attach lazy nodes, use this algo to avoid recursive calls
+		currentNodes = [this]
+		nextStepNodes = []
+		loop
+			nextStepNodes.length = 0
+			for currentNode in currentNodes
+				lz = currentNode.lazyAttach
+				_attachNode currentNode, lz[0], lz[1], lz[2]
+				currentNode.lazyAttach = null
+				# add parents if lazy
+				for n in currentNode.parents
+					nextStepNodes.push n if n.lazyAttach
+			break unless nextStepNodes.length
+
+		# attach to other parent
+		if parent
+			# check
+			throw new Error 'Expected Route object as argument' unless parent instanceof Route
+			if nodeName
+				throw new Error 'Route name expected string' unless typeof nodeName is 'string'
+				throw new Error 'Could not set route name and param at the same time' if nodeParamName
+			else
+				throw new Error 'Route param name expected string' unless typeof nodeParamName is 'string'
+			# add
+			@parent = null
+			@parents.push parent
+			# attach
+			_attachNode this, parent, nodeName, nodeParamName
+
 		# enable chain
 		this
 	###*
 	 * detach node from parent
 	 * when no parent is specified, detach from all parents
 	 * @optional @param  {Route} parent - node to detach from
+	 * @example
+	 * detach(parentNode)	# detach from this parent node
+	 * detach()				# detach from all parent nodes
 	###
 	detach: (parent)->
-		#TODO
+		# remove from list
+		parents = @parents
+		switch arguments.length
+			# detach from all parents
+			when 0
+				for parent in parents
+					_detachNode this, parent
+				@parents.length = 0
+				@parent = undefined
+			# detach from this parent
+			when 1
+				idx = parents.indexOf parent
+				if idx >= 0
+					parents.splice idx, 1
+					if parents.length is 1
+						@parent = parents[0]
+					_detachNode this, parent
+			# Illegal
+			else
+				throw new Error 'Illegal arguments'
+		if 
+
 		# enable chain
 		this
 
+	
 
 
 ### Route Prototype ###
@@ -301,11 +378,17 @@ ROUTE_PROTO.ALL			= ROUTE_ALL = -1
 
 ### sub routes ###
 FIXED_SUB_ROUTE			= Symbol 'static routes'
-PARAMETRED_SUB_ROUTE	= Symbol 'parameted routes'
 PARAM_HANDLERS			= Symbol 'param handlers'
+
+SR_PARAM_NAMES			= Symbol 'param names'
+SR_PARAM_REGEXES		= Symbol 'param regexes'
+SR_PARAM_NODES			= Symbol 'param nodes'
 
 ### others ###
 ROUTE_PROTO = Route.prototype
+
+### route to be rejected ###
+REJ_ROUTE_REGEX = /\/\/|\?/
 
 ###*
  * build handler
@@ -391,6 +474,8 @@ _routeAppendHandler = (route, method, type, handler)->
 		arr = methodObj[type]
 		throw new Error "Illegal type: #{type}" unless arr?
 		arr.push handler
+		# attach this route if not already attached
+		route.attach() if route.lazyAttach
 	return
 
 ###*
@@ -459,3 +544,60 @@ HTTP_METHODS.forEach (method)->
 # 
 # 
 # Add param hand
+
+
+###*
+ * Attach node to an other
+ * @private
+ * @example
+ * _attachNode node, [parentNode, 'nodeName', 'nodeParamName']
+###
+_attachNode = (node, parentNode, nodeName, nodeParamName)->
+	# as static name
+	if nodeName
+		# convert to lower case if ignore case is active
+		if node.app.settings.routeIgnoreCase
+			nodeName = nodeName.loLowerCase()
+		nodeName = fastDecode nodeName
+		# attach
+		ref = parentNode[FIXED_SUB_ROUTE]
+		if ref.hasOwnProperty nodeName
+			throw new Error 'Route already set' if ref[nodeName] isnt node
+		else
+			ref[nodeName] = route
+	# as param
+	if nodeParamName
+		idx = parentNode[SR_PARAM_NAMES].indexOf nodeParamName
+		if idx is -1
+			parentNode[SR_PARAM_NAMES].push nodeName
+			parentNode[SR_PARAM_NODES].push node
+			parentNode[SR_PARAM_REGEXES].push parentNode._paramToRegex nodeParamName
+		else
+			throw new Error 'Route already set' if parentNode[SR_PARAM_NODES][idx] isnt node
+
+###*
+ * Detach node from parent
+ * @private
+###
+_detachNode = (node, parentNode)->
+	# remove static
+	ref = parentNode[FIXED_SUB_ROUTE]
+	for k, v of ref
+		if v is node
+			delete ref[k]
+	# remove parametred
+	refNodes = parentNode[SR_PARAM_NODES]
+	refNames = parentNode[SR_PARAM_NAMES]
+	refRegexes = parentNode[SR_PARAM_REGEXES]
+	loop
+		idx = refNodes.indexOf node
+		if idx is -1
+			break
+		refNodes.splice idx, 1
+		refNames.splice idx, 1
+		refRegexes.splice idx, 1
+
+# include other modules
+#=include _route-find-path.coffee
+#=include _route-params.coffee
+#=include _route-onHandlerBuilder.coffee
