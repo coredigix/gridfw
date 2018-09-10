@@ -1,13 +1,23 @@
 
 path = require 'path'
 fs	 = require 'mz/fs'
+cache = require '../lib/cache'
 
 ###*
  * framework core
 ###
 
 class GridFW extends Route
-	constructor: ()->
+	###*
+	 * @param  {number} settings [description]
+	 * @return {[type]}          [description]
+	###
+	constructor: (settings)->
+		# super
+		super()
+		# settings
+		settings ?= {}
+		Object.setPrototypeOf settings, GridFW::_settings
 		# attributes
 		Object.defineProperties this,
 			### locals ###
@@ -15,9 +25,11 @@ class GridFW extends Route
 			### render function ###
 			render: value: renderTemplates
 			### settings ###
-			_settings: value: Object.create GridFW::_settings
+			_settings: value: settings
 			### view cache ###
-			_viewCache: value: {}
+			_viewCache: value: new cache
+				ttl: settings.viewCacheTTL
+				maxLength: settings.viewCacheMax
 
 
 

@@ -39,6 +39,12 @@ GridFW::_settings =
 	 * @default 3,600,000 in production mode (keep it for one houre), false otherwise
 	###
 	viewCache: off
+	###*
+	 * View cache ttl
+	 * TODO
+	###
+	viewCacheTTL: 900 # 10min
+	viewCacheMax: 1000 # view cache max entries
 	###
 	render pretty html
 	@default on in production mode, off otherwise
