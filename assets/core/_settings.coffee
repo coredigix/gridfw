@@ -34,9 +34,7 @@ GridFW::_settings =
 	 * view Cache
 	 * @when off: disable cache
 	 * @when on: enable cache for ever
-	 * @when number: cache last access timeout
 	 * @type {boolean}
-	 * @default 3,600,000 in production mode (keep it for one houre), false otherwise
 	###
 	viewCache: off
 	###*

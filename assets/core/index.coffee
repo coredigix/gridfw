@@ -3,6 +3,8 @@ path = require 'path'
 fs	 = require 'mz/fs'
 cache = require '../lib/cache'
 
+VIEW_CACHE = Symbol 'view cache'
+
 ###*
  * framework core
 ###
@@ -27,7 +29,7 @@ class GridFW extends Route
 			### settings ###
 			_settings: value: settings
 			### view cache ###
-			_viewCache: value: new cache
+			[VIEW_CACHE]: value: new cache
 				ttl: settings.viewCacheTTL
 				maxLength: settings.viewCacheMax
 

@@ -14,6 +14,10 @@ class Context #extends Response
 			app: value: app
 			### locals ###
 			locals: value: Object.create app.locals
+			### status code ###
+			statusCode:
+				value: 200
+				writable: true
 
 	###*
 	 * Render page
@@ -26,9 +30,5 @@ class Context #extends Response
 		@app._render path, locals
 		.then (html)=>
 			#TODO add headers
-			@sendHeader 'html'
+			@type 'html'
 			@end html
-	###*
-	 * Send file over HTTP
-	###
-	sendFile: (path)->
