@@ -236,7 +236,7 @@ class Route
 	route: (route)->
 		throw new Error "Route expected string, found: #{route}" unless typeof route is 'string'
 		throw new Error "Illegal route: #{route}" if REJ_ROUTE_REGEX.test route
-		settings = @app.settings
+		settings = @app._settings
 		# remove end spaces and starting slash
 		route = route.trimRight()
 		if route.startsWith '/'
@@ -556,7 +556,7 @@ _attachNode = (node, parentNode, nodeName, nodeParamName)->
 	# as static name
 	if nodeName
 		# convert to lower case if ignore case is active
-		if node.app.settings.routeIgnoreCase
+		if node.app._settings.routeIgnoreCase
 			nodeName = nodeName.loLowerCase()
 		nodeName = fastDecode nodeName
 		# attach
@@ -601,3 +601,4 @@ _detachNode = (node, parentNode)->
 #=include _route-find-path.coffee
 #=include _route-params.coffee
 #=include _route-onHandlerBuilder.coffee
+#=include _route-checker.coffee

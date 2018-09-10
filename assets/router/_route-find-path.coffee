@@ -5,7 +5,7 @@
  * @example
  * /example/path		correct
  * //example////path	correct (as /example/path, multiple slashes are ignored)
- * /example/ (depends on app.settings.tailingSlashes)
+ * /example/ (depends on app._settings.tailingSlash)
 ###
 Route::find: (path)->
 	throw new Error 'path expected string' unless typeof path is 'string'
@@ -21,7 +21,7 @@ Route::find: (path)->
 ###
 Route::_find: (path)->
 	# if ignore case
-	settings = @app.settings
+	settings = @app._settings
 	if settings.routeIgnoreCase
 		path = path.toLowerCase()
 	# split into tokens
