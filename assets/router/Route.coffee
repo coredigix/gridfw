@@ -16,7 +16,8 @@
  * 
 ###
 
-fastDecode = require 'fast-decode-uri-component'
+fastDecode	= require 'fast-decode-uri-component'
+Context		= require '../context'
 
 class Route
 	###*
@@ -35,6 +36,11 @@ class Route
 			### parent route node ###
 			parent:
 				value: parent
+				configurable: true
+				writable: true
+			### app ###
+			app:
+				value: parent && parent.app
 				configurable: true
 				writable: true
 			### @private static name sub routes ###
@@ -237,6 +243,7 @@ class Route
 		throw new Error "Route expected string, found: #{route}" unless typeof route is 'string'
 		throw new Error "Illegal route: #{route}" if REJ_ROUTE_REGEX.test route
 		settings = @app._settings
+		routeIgnoreCase = settings.routeIgnoreCase
 		# remove end spaces and starting slash
 		route = route.trimRight()
 		if route.startsWith '/'
@@ -247,15 +254,23 @@ class Route
 				route = route.slice 0, -1
 		# if empty, keep current node
 		currentRouteNode = this
+		# check for uniqueness of path params
+		routeParams = new Set()
 		if route
 			# split into tokens
-			route = route.split '/'
+			routeTokens = route.split '/'
 			# find route
-			for token in route
+			for token in routeTokens
 				# <!> param names are case sensitive!
 				# param
 				if token.startsWith ':'
 					token = token.substr 1
+					# check it's not named __proto__
+					throw new Error '__proto__ Could not be used as param name' if token is '__proto__'
+					# check for uniqueness
+					throw new Error "Duplicated path param <#{token}> at: #{route}" if routeParams.has token
+					routeParams.add token
+
 					# relations are stored as array (for performance)
 					# [0]: contains param name
 					# [1]: contains reference to route object
@@ -270,7 +285,7 @@ class Route
 					if token.startsWith '\\:'
 						token = token.substr 1
 					# when route isn't case sensitive
-					if settings.routeIgnoreCase
+					if routeIgnoreCase
 						token = token.toLowerCase()
 					# decode token
 					token = fastDecode token
@@ -296,7 +311,6 @@ class Route
 	 * this will propagate to lazy parents to (will change to active too)
 	###
 	attach: (parent, nodeName, nodeParamName)->
-		parentNodes = @parent
 		# attach lazy nodes, use this algo to avoid recursive calls
 		currentNodes = [this]
 		nextStepNodes = []
@@ -362,8 +376,13 @@ class Route
 		# enable chain
 		this
 
-	
-
+	###*
+	 * Use a handler
+	###
+	use: (middleware)->
+		@all()
+			.use middleware
+			.end
 
 ### Route Prototype ###
 HTTP_METHODS = http.METHODS
@@ -389,6 +408,22 @@ ROUTE_PROTO = Route.prototype
 
 ### route to be rejected ###
 REJ_ROUTE_REGEX = /\/\/|\?/
+
+
+
+###*
+ * get app, called once for performance
+###
+Object.defineProperty Route, 'app',
+	get: ->
+		for parent in @parents
+			app = parent.app
+			break if app
+		# save app (to not call this getter again)
+		if app
+			Object.defineProperty this, 'app', value: app
+		# return app
+		app
 
 ###*
  * build handler
@@ -459,9 +494,7 @@ _routeAppendHandler = (route, method, type, handler)->
 		for v in method
 			_routeAppendHandler route, v, type, handler
 	else
-		throw new Error "Illegal http method #{method}" unless typeof method is 'string' and method in HTTP_METHODS
-		# method key
-		method = '_' + method.toUpperCase()
+		method = _checkHttpMethod method
 		# create method object if not already
 		methodObj = route[method] ?=[
 			[] # ROUTE_HANDLER
@@ -486,9 +519,8 @@ _rmRouteHandlers = (currentRoute, method, type, handler)->
 		for v in method
 			_rmRouteHandlers currentRoute, v, type, handler
 	else
-		throw new Error "Illegal http method #{method}" unless typeof method is 'string' and method in HTTP_METHODS
 		# method key
-		method = '_' + method.toUpperCase()
+		method = _checkHttpMethod method
 		methodObj = currentRoute[method]
 		if methodObj
 			# remover
@@ -527,7 +559,8 @@ _rmRouteHandlers = (currentRoute, method, type, handler)->
  * route.get('/route', handler)
  * route.get(['/route', '/route2'], handler)
 ###
-HTTP_METHODS.forEach (method)->
+HTTP_METHODS.forEach (method, i)->
+	# mehtod
 	Object.defineProperty ROUTE_PROTO, method,
 		value: (route, handler)->
 			switch arguments.length
@@ -597,8 +630,23 @@ _detachNode = (node, parentNode)->
 		refNames.splice idx, 1
 		refRegexes.splice idx, 1
 
+###*
+ * check http method
+ * @return {string} useful key to access method data
+###
+_checkHttpMethod = (method)->
+	throw new Error 'method expected string' unless typeof method is 'string'
+	method = method.toUpperCase()
+	throw new Error "Illegal http method: #{method}" unless method in HTTP_METHODS
+	# return useful key
+	'_' + method
+
+
 # include other modules
 #=include _route-find-path.coffee
 #=include _route-params.coffee
 #=include _route-onHandlerBuilder.coffee
 #=include _route-checker.coffee
+
+
+module.exports = Route

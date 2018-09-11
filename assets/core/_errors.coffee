@@ -27,3 +27,15 @@
 # 			path: value: path
 # ------------------
 # 404: not found
+
+_processUncaughtRequestErrors = (app, ctx, error)->
+	console.error 'Error>> Error handling isn\'t implemented!'
+	if typeof error is 'number'
+		switch error
+			# page not found
+			when 404
+				console.error '404>> page not found!'
+			else
+				console.error 'Error>> ', error
+	else
+		console.error 'Error>> ', error

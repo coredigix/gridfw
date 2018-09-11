@@ -24,9 +24,7 @@
     "url": "https://github.com/coredigix/gridfw/issues"
   },
   "homepage": "https://github.com/coredigix/gridfw#readme",
-  "dependencies": {
-    "memory-cache-ttl": "^1.0.52"
-  },
+  "dependencies": {},
   "devDependencies": {
     "gulp": "^4.0.0",
     "gulp-coffeescript": "0.0.15",

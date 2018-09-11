@@ -11,6 +11,14 @@
  * default settings
 ###
 GridFW::_settings =
+	###
+	use cache for routes, this make it faster
+	to not look for a route each time
+	(route lookup is already optimized by using tree access)
+	@default on in production mode
+	###
+	routeCache: off
+	routeCacheMax: 50 # route cache max entries
 	###*
 	 * Ignore trailing slashes
 	 * 		off	: ignore
@@ -37,12 +45,7 @@ GridFW::_settings =
 	 * @type {boolean}
 	###
 	viewCache: off
-	###*
-	 * View cache ttl
-	 * TODO
-	###
-	viewCacheTTL: 900 # 10min
-	viewCacheMax: 1000 # view cache max entries
+	viewCacheMax: 50 # view cache max entries
 	###
 	render pretty html
 	@default on in production mode, off otherwise
