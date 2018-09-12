@@ -37,6 +37,7 @@ Route::_find: (path, method)->
 	# empty middlewars queu tobe used again (for performance issue)
 	middlewareQueu= []
 	errorHandlerQueu= []
+	paramResolversQueu= {}
 	# method
 	method = _checkHttpMethod method
 	# split into tokens
@@ -98,7 +99,17 @@ Route::_find: (path, method)->
 			if q.length
 				for fx in q
 					errorHandlerQueu.push fx
-			
+			### param resolvers ###
+			q= currentNode[ROUTE_PARAM]
+			if q
+				for k, v of q
+					paramResolversQueu[k] = v
+	
+	# if has no param resolver
+	unless Object.keys(paramResolversQueu).length
+		paramResolversQueu = null
+	unless Object.keys(params).length
+		params = null
 	# return found node
 	n: currentNode # node
 	p: params # params
@@ -107,3 +118,4 @@ Route::_find: (path, method)->
 	h: methodeDescriptor[ROUTE_HANDLER] # handlers
 	pr: methodeDescriptor[ROUTE_PRE_PROCESS] # pre-process
 	ps:methodeDescriptor[ROUTE_POST_PROCESS] # post-process
+	pm: paramResolversQueu # param resolvers

@@ -38,7 +38,7 @@ GridFW::listen: (options)->
 SERVER_LISTENING_PROTOCOLS=
 	http: (options, app)->
 		server = app.server = http.createServer
-			IncomingMessage : Request
-			ServerResponse : Response
+			IncomingMessage : Context.Request
+			ServerResponse : Context
 			,
 			app.handle.bind app

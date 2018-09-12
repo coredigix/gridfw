@@ -3,8 +3,8 @@ path = require 'path'
 fs	 = require 'mz/fs'
 LRUCache	= require 'lru-native'
 
-Request		= require '../context/request'
-Response	= require '../context/response'
+Context		= require '../context'
+LoggerFactory= require '../lib/logger'
 
 VIEW_CACHE = Symbol 'view cache'
 ROUTE_CACHE = Symbol 'route cache'
@@ -60,13 +60,15 @@ class GridFW extends Route
 			### route cache ###
 			[ROUTE_CACHE]: value: routeCache
 
-	
+
+# add log support
+LoggerFactory GridFW.prototype
 
 
 
 
 #=include _settings.coffee
 #=include _render.coffee
-#=include _handler-request.coffee
+#=include _handle-request.coffee
 #=include _listen.coffee
 #=include _errors.coffee

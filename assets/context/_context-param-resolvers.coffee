@@ -49,7 +49,14 @@ Object.defineProperties Context.prototype,
 		query
 	### resolve url params for the first time used ###
 	params: get: ->
-		params = @rawParams
+		rawParams = @rawParams
+		params = Object.create rawParams
+		paramResolvers = @_pR # param resolvers @see ../core/_handle-request.coffee
+		for k, v of @rawParams
+			for p in paramResolvers
+				if k in p
+					params[k] = await p[k] this, v
+					break
 		#TODO resolve values
 		# add to current object for future use
 		Object.defineProperty this, 'params', value: params

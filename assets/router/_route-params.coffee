@@ -4,8 +4,7 @@
  * @author COREDIGIX
 ###
 
-ROUTE_PARAM_REGEXES = Symbol 'Route params'
-ROUTE_PARAM_HANDLERS = Symbol 'Route params'
+ROUTE_PARAM = Symbol 'Route params'
 
 VOID_REGEX =
 	test: -> true
@@ -21,23 +20,23 @@ VOID_REGEX =
 ###
 Route::param= (paramName, regex, handler)->
 	throw new Error 'ParamName expected string' unless typeof paramName is 'string'
-	paramRegexes = @[ROUTE_PARAM_REGEXES] ?= {}
-	paramHandlers = @[ROUTE_PARAM_HANDLERS] ?= {}
-	throw new Error "Param <#{paramName}> already set for this route" if paramRegexes[paramName]?
+	params	= @[ROUTE_PARAM] ?= {}
+	throw new Error "Param <#{paramName}> already set for this route" if params[paramName]?
 	switch arguments.length
 		when 2
 			throw new Error 'Handler required' unless typeof regex is 'function'
 			handler = regex
-			paramRegexes[paramName] = VOID_REGEX
+			regex	= VOID_REGEX
 		when 3
 			throw new Error 'Uncorrect regex' unless regex and typeof regex.test is 'function'
 			throw new Error 'Handler expected function' unless typeof handler is 'function'
-			paramRegexes[paramName] = regex
 		else
 			throw new Error 'Illegal arguments'
 	# add handler
 	throw new Error 'Handler expect exactly two parameters (ctx, data)' unless handler.length is 2
-	paramHandlers[paramName] = handler
+	params[paramName] =
+		r: regex
+		h: handler
 	# chain
 	this
 ###*
@@ -47,7 +46,7 @@ Route::param= (paramName, regex, handler)->
 Route::hasParam = (paramName)->
 	throw new Error 'Illegal arguments' if arguments.length isnt 1
 	throw new Error 'ParamName expected string' unless typeof paramName is 'string'
-	params = @[ROUTE_PARAM_REGEXES]
+	params = @[ROUTE_PARAM]
 	if params then params.hasOwnProperty(paramName) else false
 
 ###*
@@ -57,14 +56,11 @@ Route::hasParam = (paramName)->
 Route::rmParam = (paramName)->
 	throw new Error 'Illegal arguments' if arguments.length isnt 1
 	throw new Error 'ParamName expected string' unless typeof paramName is 'string'
-	paramRegexes = @[ROUTE_PARAM_REGEXES]
-	paramHandlers = @[ROUTE_PARAM_HANDLERS]
-	if paramRegexes
-		delete paramRegexes[paramName]
-		delete paramHandlers[paramName]
-		unless Object.keys(paramRegexes).length
-			@[ROUTE_PARAM_REGEXES]	= undefined
-			@[ROUTE_PARAM_HANDLERS]	= undefined
+	params = @[ROUTE_PARAM]
+	if params
+		delete params[paramName]
+		unless Object.keys(params).length
+			@[ROUTE_PARAM]	= undefined
 
 
 ###*
@@ -72,4 +68,4 @@ Route::rmParam = (paramName)->
  * @private
 ###
 Route::_paramToRegex= (paramName)->
-	@[ROUTE_PARAM_REGEXES]?[paramName] || VOID_REGEX
+	@[ROUTE_PARAM]?[paramName]?.r || VOID_REGEX

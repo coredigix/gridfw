@@ -61,8 +61,7 @@ class Route
 			param manger for this route and it's subroutes
 			@private
 			###
-			[ROUTE_PARAM_REGEXES]: undefined_
-			[ROUTE_PARAM_HANDLERS]: undefined_
+			[ROUTE_PARAM]: undefined_
 
 		# Route lazy add
 		if lazyName or lazyParam
