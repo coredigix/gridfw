@@ -88,6 +88,7 @@ GridFW::handle= (req, ctx)->
 			app: value: this
 			req: value: req
 			res: value: ctx
+			url: value: req.url
 			# url
 			path: value: rawPath
 			rawQuery: value: rawUrlQuery

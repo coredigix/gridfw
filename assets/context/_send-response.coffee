@@ -4,7 +4,12 @@ Object.defineProperties Context.prototype,
 	 * set status code
 	###
 	status:		value: (status)->
-		@statusCode = status
+		if typeof status is 'number'
+			@statusCode = status
+		else if typeof status is 'string'
+			@statusMessage = status
+		else
+			throw new Error 'status expected number or string'
 		this
 	###*
 	 * set content type
@@ -31,8 +36,3 @@ Object.defineProperties Context.prototype,
 	 * Download file
 	###
 	download:	value: ()->
-
-	###*
-	 * end request
-	###
-	end: value: (data)->
