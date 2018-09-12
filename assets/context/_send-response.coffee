@@ -32,3 +32,7 @@ Object.defineProperties Context.prototype,
 	###
 	download:	value: ()->
 
+	###*
+	 * end request
+	###
+	end: value: (data)->
