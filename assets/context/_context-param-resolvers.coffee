@@ -27,6 +27,7 @@ Object.defineProperties Context.prototype,
 					value = ''
 				# fix __proto__
 				if name is '__proto__'
+					@warn 'query-parser', 'Received param with illegal name: __proto__'
 					name = '__proto'
 				# append to object
 				alreadyValue = query[name]
