@@ -99,6 +99,11 @@ GridFW::handle= (req, ctx)->
 			params: value: params
 			# posible error
 			error: UNDEFINED_
+		# add to request
+		Object.defineProperties req,
+			res: value: ctx
+			ctx: value: ctx
+			req: value: req
 		# execute middlewares
 		if routeDescriptor.m.length
 			for handler in routeDescriptor.m

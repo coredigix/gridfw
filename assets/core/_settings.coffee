@@ -55,3 +55,4 @@ GridFW::_settings =
 	 * Trust proxy
 	###
 	trustProxy: on
+	trustProxyFx: -> on # compiled version
