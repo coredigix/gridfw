@@ -1,13 +1,18 @@
 'use strict'
 
-http = require 'http'
+http		= require 'http'
 fastDecode	= require 'fast-decode-uri-component'
-Buffer = require('safe-buffer').Buffer
+Buffer		= require('safe-buffer').Buffer
+encodeurl	= require 'encodeurl'
+sendFile	= require 'send'
+onFinishLib	= require 'on-finished'
+contentDisposition = require('content-disposition')
 
 Request = require './request'
 
 LoggerFactory= require '../lib/logger'
 {gettersOnce} = require '../lib/define-getter-once.coffee'
+GError			= require '../lib/error'
 
 DEFAULT_ENCODING = 'utf8'
 
@@ -20,14 +25,27 @@ class Context extends http.ServerResponse
 	@Request: Request
 
 	###*
-	 * redirect
+	 * redirect to this URL
+	 * @param {string} url - target URL
+	 * @param {boolean} isPermanent - If this is a permanent or temp redirect
+	 * (use this.redirectPermanent(url) in case of permanent redirect)
 	###
-	redirect: (url)->
+	redirect: (url, isPermanent)->
+		# set location header
+		@setHeader 'location', encodeurl url
+		#TODO add some response (depending on "accept" header: text, html, json, ...)
+		# status code
+		@statusCode if isPermanent then 302 else 301
+		# end request
+		@end()
 	###*
-	 * Permanent redirect
+	 * Permanent redirect to this URL
 	###
-	permanentRedirect: (url)->
-
+	redirectPermanent: (url)-> @redirect url, true
+	###*
+	 * Redirect back (go back to referer)
+	###
+	redirectBack: -> @redirect @req.getHeader('Referrer') || '/'
 
 	###*
 	 * Render page
@@ -95,6 +113,7 @@ LoggerFactory Context.prototype
 #=include _context-param-resolvers.coffee
 #=include _send-response.coffee
 #=include _context-content-types.coffee
+#=include _context-cookies.coffee
 
 gettersOnce Context.prototype,
 	### if the request is aborted ###

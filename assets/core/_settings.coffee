@@ -56,3 +56,8 @@ GridFW::_settings =
 	###
 	trustProxy: on
 	trustProxyFx: -> on # compiled version
+	###*
+	 * Render JSON and XML
+	 * @default off on production mode
+	###
+	jsonPretty: on
