@@ -8,7 +8,7 @@
  * //example////path	correct (as /example/path, multiple slashes are ignored)
  * /example/ (depends on app._settings.tailingSlash)
 ###
-Route::find: (path, method)->
+Route::find= (path, method)->
 	throw new Error 'path expected string' unless typeof path is 'string'
 	throw new Error "Illegal route: #{route}" if REJ_ROUTE_REGEX.test route
 	# force to start by /
@@ -33,7 +33,7 @@ Route::find: (path, method)->
  * @return {RouteDescriptor}      descriptor to target route
  * @throws {"notFound"} If route not found
 ###
-Route::_find: (path, method)->
+Route::_find= (path, method)->
 	# empty middlewars queu tobe used again (for performance issue)
 	middlewareQueu= []
 	errorHandlerQueu= []

@@ -6,7 +6,8 @@ Buffer		= require('safe-buffer').Buffer
 encodeurl	= require 'encodeurl'
 sendFile	= require 'send'
 onFinishLib	= require 'on-finished'
-contentDisposition = require('content-disposition')
+contentDisposition = require 'content-disposition'
+mimeType	= require 'mime-types'
 
 Request = require './request'
 

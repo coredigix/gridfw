@@ -61,3 +61,11 @@ GridFW::_settings =
 	 * @default off on production mode
 	###
 	jsonPretty: on
+
+	###
+	Cache: generate ETag
+	@param {Buffer} data - data to generate ETag
+	###
+	etag: (data) ->
+		#TODO
+		''

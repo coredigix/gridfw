@@ -36,22 +36,59 @@ Object.defineProperties Context.prototype,
 		req = @req
 		switch typeof data
 			when 'string'
+				@contentType ?= 'text/html'
 				data = Buffer.from data, encoding
-				@contentType ?= 'html'
 			when 'object'
 				if Buffer.isBuffer data
-					@contentType ?= 'bin'
+					@contentType ?= 'application/octet-stream'
 				else
-					return @json data, encoding # check accept header if we wants json or xml
+					#TODO check accept header if we wants json or xml
+					return @json data
 			when 'undefined'
+				@contentType ?= 'text/plain'
 				data = ''
-				@contentType = 'text'
 			else
+				@contentType ?= 'text/plain'
 				data = data.toString()
-				@contentType = 'text'
+			
+		# ETag
+		unless @hasHeader 'ETag'
+			etag = settings.etag data
+			@setHeader 'ETag', etag if etag
 		
-		# populate Content-Length
+		# freshness
+		@statusCode = 304 if @statusCode isnt 304 and req.fresh
 
+		# strip irrelevant headers
+		if @statusCode in [204, 304]
+			@removeHeader 'Content-Type'
+			@removeHeader 'Content-Length'
+			@removeHeader 'Transfer-Encoding'
+			data = ''
+		else
+			# populate Content-Length
+			@setHeader 'Content-Length', data.length
+			# set content type
+			contentType = @contentType
+			if typeof contentType is 'string'
+				# fix content type
+				if contentType.indexOf('/') is -1
+					contentType = mimeType.lookup contentType
+					contentType = 'application/octet-stream' unless contentType
+				# add encoding
+				contentType = contentType.concat '; charset=', encoding
+			else
+				contentType = 'application/octet-stream'
+			# set as header
+			@setHeader 'Content-Type', contentType
+
+
+		
+		# send
+		if req.method is 'HEAD'
+			@end()
+		else
+			@end data, encoding
 
 		# chain
 		this

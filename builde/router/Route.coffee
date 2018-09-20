@@ -73,8 +73,7 @@ class Route
 			else
 				throw new Error 'Route param name expected string' unless typeof lazyParam is 'string'
 			# add as lazy
-			@lazyAttach= [parent, lazyName, lazyParam]
-		return
+			@lazyAttach: [parent, lazyName, lazyParam]
 
 	###*
 	 * Router events
@@ -371,6 +370,8 @@ class Route
 			# Illegal
 			else
 				throw new Error 'Illegal arguments'
+		if 
+
 		# enable chain
 		this
 
@@ -641,10 +642,384 @@ _checkHttpMethod = (method)->
 
 
 # include other modules
-#=include _route-find-path.coffee
-#=include _route-params.coffee
-#=include _route-onHandlerBuilder.coffee
-#=include _route-checker.coffee
+
+###*
+ * find route by URL
+ * @param {string} path - find sub route based on that path
+ * @optional @param {string} method - http method @default GET
+ * @example
+ * /example/path		correct
+ * //example////path	correct (as /example/path, multiple slashes are ignored)
+ * /example/ (depends on app._settings.tailingSlash)
+###
+Route::find: (path, method)->
+	throw new Error 'path expected string' unless typeof path is 'string'
+	throw new Error "Illegal route: #{route}" if REJ_ROUTE_REGEX.test route
+	# force to start by /
+	unless path.startsWith '/'
+		path = '/' + path
+	# trailing slash
+	settings = @app.settings
+	unless settings.trailingSlash
+		if path.endsWith '/'
+			path = path.slice 0, -1
+	# ignore case
+	if settings.routeIgnoreCase
+		path = path.toLowerCase()
+	# use internal find
+	@_find path, method || 'GET'
+
+###*
+ * find route
+ * @private
+ * @param  {string} path - correct path to map to a route
+ * @param {string} method - method used lowercased and prefexed with "_", example: _get
+ * @return {RouteDescriptor}      descriptor to target route
+ * @throws {"notFound"} If route not found
+###
+Route::_find: (path, method)->
+	# empty middlewars queu tobe used again (for performance issue)
+	middlewareQueu= []
+	errorHandlerQueu= []
+	paramResolversQueu= {}
+	# method
+	method = _checkHttpMethod method
+	# split into tokens
+	path = path.split '/'
+	pathLastIndex= path.length
+	if pathLastIndex > 2 # ignore case of 2 because "/", see comment: "last node (if enabled)"
+		--pathLastIndex
+
+	# look for route node
+	currentNode = this
+	params	= {}
+
+	unless path is '/' # not route
+		for token, i in path
+			if token
+				# check for static value
+				node = currentNode[FIXED_SUB_ROUTE][token]
+				if node
+					currentNode = node
+				# check for parametred node
+				else
+					ref = currentNode[SR_PARAM_REGEXES]
+					k = ref.length
+					if k
+						loop
+							--k
+							n = ref[k]
+							if n.test token
+								currentNode = currentNode[SR_PARAM_NODES][k]
+								params[currentNode[SR_PARAM_NAMES][k]] = token
+								break
+							else unless k
+								throw 404
+					else
+						throw 404
+			else unless i # start node, do nothing
+			else if i is pathLastIndex # last node (if enabled)
+				currentNode = currentNode[FIXED_SUB_ROUTE]['']
+				unless currentNode
+					throw 404
+			else # some dupplicated slashes inside path, just ignore theme
+				continue
+				
+			###
+			[] # ROUTE_MIDDLEWARE
+			[] # ROUTE_HANDLER
+			[] # ROUTE_PRE_PROCESS
+			[] # ROUTE_POST_PROCESS
+			[] # ROUTE_ERR_HANDLER
+			###
+			### middlewares ###
+			methodeDescriptor = currentNode[method]
+			q= methodeDescriptor[ROUTE_MIDDLEWARE]
+			if q.length
+				for fx in q
+					middlewareQueu.push fx
+			### error handlers ###
+			q= methodeDescriptor[ROUTE_ERR_HANDLER]
+			if q.length
+				for fx in q
+					errorHandlerQueu.push fx
+			### param resolvers ###
+			q= currentNode[ROUTE_PARAM]
+			if q
+				for k, v of q
+					paramResolversQueu[k] = v
+	
+	# if has no param resolver
+	unless Object.keys(paramResolversQueu).length
+		paramResolversQueu = null
+	unless Object.keys(params).length
+		params = null
+	# return found node
+	n: currentNode # node
+	p: params # params
+	m: middlewareQueu # middlewares queu, sync mode only
+	e: errorHandlerQueu.reverse() # error handlers
+	h: methodeDescriptor[ROUTE_HANDLER] # handlers
+	pr: methodeDescriptor[ROUTE_PRE_PROCESS] # pre-process
+	ps:methodeDescriptor[ROUTE_POST_PROCESS] # post-process
+	pm: paramResolversQueu # param resolvers
+###*
+ * Param manager
+ * (Affect both Path params and query params)
+ * @author COREDIGIX
+###
+
+ROUTE_PARAM = Symbol 'Route params'
+
+VOID_REGEX =
+	test: -> true
+
+###*
+ * Add param
+ * @param {string} paramName - name of the parameter
+ * @optional @param {Regex} regex - regex or un object that contains a function "test"
+ * @param {function} handler - the function that will handle the param
+ * @example
+ * route.param( 'myParam', /^\d$/i, (data) => {return data} )
+ * route.param( 'myParam', (data) => {return data} )
+###
+Route::param= (paramName, regex, handler)->
+	throw new Error 'ParamName expected string' unless typeof paramName is 'string'
+	params	= @[ROUTE_PARAM] ?= {}
+	throw new Error "Param <#{paramName}> already set for this route" if params[paramName]?
+	switch arguments.length
+		when 2
+			throw new Error 'Handler required' unless typeof regex is 'function'
+			handler = regex
+			regex	= VOID_REGEX
+		when 3
+			throw new Error 'Uncorrect regex' unless regex and typeof regex.test is 'function'
+			throw new Error 'Handler expected function' unless typeof handler is 'function'
+		else
+			throw new Error 'Illegal arguments'
+	# add handler
+	throw new Error 'Handler expect exactly two parameters (ctx, data)' unless handler.length is 2
+	params[paramName] =
+		r: regex
+		h: handler
+	# chain
+	this
+###*
+ * Check if this route has param
+ * @param {string} paramName - param name
+###
+Route::hasParam = (paramName)->
+	throw new Error 'Illegal arguments' if arguments.length isnt 1
+	throw new Error 'ParamName expected string' unless typeof paramName is 'string'
+	params = @[ROUTE_PARAM]
+	if params then params.hasOwnProperty(paramName) else false
+
+###*
+ * Remove param handler from this route
+ * @param {string} paramName - param name
+###
+Route::rmParam = (paramName)->
+	throw new Error 'Illegal arguments' if arguments.length isnt 1
+	throw new Error 'ParamName expected string' unless typeof paramName is 'string'
+	params = @[ROUTE_PARAM]
+	if params
+		delete params[paramName]
+		unless Object.keys(params).length
+			@[ROUTE_PARAM]	= undefined
+
+
+###*
+ * get regex related to a param
+ * @private
+###
+Route::_paramToRegex= (paramName)->
+	@[ROUTE_PARAM]?[paramName]?.r || VOID_REGEX
+
+###*
+ * build handler for "Router::on" method
+ * @private
+ * @example
+ * router.on('GET', '/route')
+ * 		.use(middleware)
+ * 		.then(handler)
+ * 		.then(handler, errHandler)
+ * 		.catch(errHandler)
+ * 		.finally(finalHandler)
+ * router.on('GET', '/route')
+ * 		.catch(errHandler)
+ * 		.finally()
+###
+class _OnHandlerBuilder
+	###*
+	 * @constructor
+	 * @param  {Object} _parent - parent object (router)
+	 * @param  {[type]} cb  - callback, when route created
+	###
+	constructor: (@_parent ,@cb)->
+		# store promise handlers in case of promise architecture
+		@promiseQueu = []
+		# in case of global handlers (post process and error handler)
+		@postHandlers	= []
+		@preHandlers	= []
+		@errHandlers	= []
+		# middlewares
+		@middlewares	= []
+		# fire build if not explicitly called
+		@_buildTimeout = setTimeout (=> do @build), 0
+		return
+	###*
+	 * Build handler and returns to parent object
+	 * @return {Object} parent object
+	###
+	build: ->
+		# cancel auto build
+		clearTimeout @_buildTimeout
+		# send response to parent object
+		@cb this
+		# return parent object
+		@_parent
+	###*
+	 * then
+	 * @example
+	 * .then (ctx)->
+	 * .then ( (ctx)-> ), ( (ctx{error})-> )
+	###
+	then: (handler, errHandler)->
+		throw new Error 'Handler expected function' unless !handler or typeof handler is 'function'
+		throw new Error 'Error Handler expected function' unless !errHandler or typeof errHandler is 'function'
+		# expect no global error handler or post handler is added
+		throw new Error 'Illegal use of promise handlers, please see documentation' if @finally.length or @catch.length
+		# append as promise or error handler
+		@promiseQueu.push [handler, errHandler]
+		# return "this" to enable chain
+		this
+	###*
+	 * catch
+	 * Add "Promise catch" handler or "error handling" handler
+	 * @param {function} errHandler - Error handler
+	 * @example
+	 * .catch (ctx{error})->
+	###
+	catch: (errHandler)->
+		throw new Error 'Handler expected function' unless typeof handler is 'function'
+		if @promise.length
+			@then null, errHandler
+		else
+			@errHandlers.push errHandler
+		# return "this" for chain
+		this
+	###*
+	 * finally
+	 * Add promise finally or post process handler
+	 * @param {function} handler - Promise finally or post process handler
+	 * @example
+	 * .finally (ctx)->
+	###
+	finally: (handler)->
+		throw new Error 'Handler expected function' unless typeof handler is 'function'
+		if @promise.length
+			@then handler, handler
+		else
+			@postHandlers.push handler
+		# return "this" for chain
+		this
+	###*
+	 * middlewares
+	 * @example
+	 * .use (ctx)->
+	 * .use (ctx, res, next)-> # express compatible format, best to use it only with express middlewares
+	 * .use (err, ctx, res, next)-> # express error handler compatible format, best to use it only with express middlewares
+	###
+	use: (middleware)->
+		throw new Error 'middleware expected function' unless typeof middleware is 'function'
+		# Gridfw format
+		if middleware.length is 1
+			@middlewares.push middleware
+		# compatibility with express
+		else if middleware.length is 3
+			@middlewares.push (ctx)->
+				new Promise (resolve, reject)->
+					middleware ctx, ctx.res, (err)->
+						if err then reject err
+						else resolve()
+		# express error handler
+		#TODO check if this error handler is compatible
+		else if middleware.length is 4
+			@errHandlers.push (ctx)->
+				new Promise (resolve, reject)->
+					middleware ctx.error, ctx, ctx.res, (err)->
+						if err then reject err
+						else resolve()
+		# Uncknown format
+		else
+			throw new Error 'Illegal middleware format'
+		# return "this" for chain
+		this
+	###*
+	 * preHandlers
+	 * @example
+	 * .filter (ctx)->
+	###
+	filter: (handler)->
+		throw new Error 'Filter expected function' unless typeof handler is 'function'
+		@preHandlers.push handler
+		# return "this" for chain
+		this
+
+###*
+ * create route and return to parent object
+###
+Object.defineProperty _OnHandlerBuilder, 'end', get: -> @build()
+###*
+ * Check all sub routes are compatible and optimized
+ * use explicitly at production mode
+ * We avoided to use a recursive function
+###
+
+Route.checker = ->
+	errors = []
+	nextNodes = [
+		node: this
+		path: []
+	]
+	avoidCirc = new Set() # to avoid cyclic call
+	step = 0
+	loop
+		# current node
+		currentStep = nextNodes[step]
+		unless currentStep
+			break
+		currentNode = currentStep.node
+		if avoidCirc.has currentNode
+			continue
+		avoidCirc.add currentNode
+		# check all static values are not matched by a param regex
+		nodeRegexes = currentNode[SR_PARAM_REGEXES]
+		for k,v of currentNode[FIXED_SUB_ROUTE]
+			for rgx in nodeRegexes
+				if rgx.test k
+					errors.push
+						codeText: 'RegexMatchesKey'
+						key: k
+						path: '/' + currentStep.path.concat(k).join('/')
+						message: "key <#{k}> matched by param regex: #{rgx}"
+		#TODO: check two regexes arent equals, matches or infinit loop
+
+		# add static sub nodes
+		for k,v of currentNode[FIXED_SUB_ROUTE]
+			nextNodes.push
+				node: v
+				path: currentStep.path.concat k
+		# add parametred sub nodes
+		pNodesNames = currentNode[SR_PARAM_NAMES]
+		for k,v in currentNode[SR_PARAM_NODES]
+			nextNodes.push
+				node: v
+				path: currentStep.path.concat pNodesNames[k]
+		# next
+		++step
+	# return errors
+	errors
 
 
 module.exports = Route

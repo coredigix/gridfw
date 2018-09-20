@@ -13,7 +13,7 @@ DEFAULT_PROTOCOL = 'http'
  * 		port: 3000
  * 		protocol: 'http' or 'https' or 'http2'
 ###
-GridFW::listen: (options)->
+GridFW::listen= (options)->
 	new Promise (res, rej)->
 		# options
 		unless options
