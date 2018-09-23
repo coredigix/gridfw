@@ -33,6 +33,30 @@ GridFW::listen= (options)->
 		# create server
 		server = servFacto options, this
 
+		# listen options
+		listenOptions = if typeof options.port is 'number' then options.port else {}
+		# run listener
+		server.listen listenOptions, (err)=>
+			if err
+				rej err
+			else
+				try
+					# get port and host
+					info = server.address()
+					# bind basic data
+					Object.defineProperties this,
+						server	: value: server
+						port	: value: info.port
+						ip		: value: info.address
+						ipType	: value: info.family
+						host	: value: options.host || 'localhost'
+						path	: value: options.path || '/'
+					# resolve
+					res this
+				catch e
+					rej e
+				
+
 
 ### make server listening depending on the used protocol ###
 SERVER_LISTENING_PROTOCOLS=
