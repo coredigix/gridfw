@@ -49,41 +49,42 @@ Object.defineProperties Context.prototype,
 				data = ''
 			else
 				@contentType ?= 'text/plain'
-				data = data.toString()
-			
-		# ETag
-		unless @hasHeader 'ETag'
-			etag = settings.etag data
-			@setHeader 'ETag', etag if etag
-		
-		# freshness
-		@statusCode = 304 if @statusCode isnt 304 and req.fresh
-
-		# strip irrelevant headers
-		if @statusCode in [204, 304]
-			@removeHeader 'Content-Type'
-			@removeHeader 'Content-Length'
-			@removeHeader 'Transfer-Encoding'
-			data = ''
+				data = Buffer.from data.toString(), encoding
+		# send headers
+		if @headersSent
+			@warn 'SEND_DATA', 'Headers already sent!'
 		else
-			# populate Content-Length
-			@setHeader 'Content-Length', data.length
-			# set content type
-			contentType = @contentType
-			if typeof contentType is 'string'
-				# fix content type
-				if contentType.indexOf('/') is -1
-					contentType = mimeType.lookup contentType
-					contentType = 'application/octet-stream' unless contentType
-				# add encoding
-				contentType = contentType.concat '; charset=', encoding
+			# ETag
+			unless @hasHeader 'ETag'
+				etag = settings.etag data
+				@setHeader 'ETag', etag if etag
+			
+			# freshness
+			@statusCode = 304 if @statusCode isnt 304 and req.fresh
+
+			# strip irrelevant headers
+			if @statusCode in [204, 304]
+				@removeHeader 'Content-Type'
+				@removeHeader 'Content-Length'
+				@removeHeader 'Transfer-Encoding'
+				data = ''
 			else
-				contentType = 'application/octet-stream'
-			# set as header
-			@setHeader 'Content-Type', contentType
+				# populate Content-Length
+				@setHeader 'Content-Length', data.length
+				# set content type
+				contentType = @contentType
+				if typeof contentType is 'string'
+					# fix content type
+					if contentType.indexOf('/') is -1
+						contentType = mimeType.lookup contentType
+						contentType = 'application/octet-stream' unless contentType
+					# add encoding
+					contentType = contentType.concat '; charset=', encoding
+				else
+					contentType = 'application/octet-stream'
+				# set as header
+				@setHeader 'Content-Type', contentType
 
-
-		
 		# send
 		if req.method is 'HEAD'
 			@end()

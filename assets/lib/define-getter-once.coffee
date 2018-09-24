@@ -22,7 +22,7 @@ module.exports =
 
 
 _getterProxy = (k, v)->
-	value: ->
+	get: ->
 		value = v.call this
 		Object.defineProperty this, k, value: value
 		value

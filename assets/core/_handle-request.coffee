@@ -42,6 +42,20 @@ GridFW::handle= (req, ctx)->
 		# get from cache
 		routeCache = @[ROUTE_CACHE]
 		routeDescriptor = routeCache and routeCache.get rawPath
+		# add to context
+		Object.defineProperties ctx,
+			app: value: this
+			req: value: req
+			res: value: ctx
+			url: value: req.url
+			# url
+			path: value: rawPath
+			rawQuery: value: rawUrlQuery
+		# add to request
+		Object.defineProperties req,
+			res: value: ctx
+			ctx: value: ctx
+			req: value: req
 		# lookup for route
 		unless routeDescriptor
 			###*
@@ -55,7 +69,7 @@ GridFW::handle= (req, ctx)->
 			 * ps:post-process
 			 * pm: param resolvers
 			###
-			routeDescriptor = @_find rawPath
+			routeDescriptor = @_find rawPath, req.method
 			# put in cache (production mode)
 			routeCache.set rawPath, routeDescriptor if routeCache?
 		# resolve params
@@ -78,32 +92,13 @@ GridFW::handle= (req, ctx)->
 						queryParams[k] = await paramResolvers[k] this, v
 		else
 			queryParams = EMPTY_OBJ
-		#TODO resolve values
-		# add to current object for future use
-		Object.defineProperty this, 'query', value: query
-		# return value
-		query
-		# add to context
+		# # add to context
 		Object.defineProperties ctx,
-			app: value: this
-			req: value: req
-			res: value: ctx
-			url: value: req.url
-			# url
-			path: value: rawPath
-			rawQuery: value: rawUrlQuery
 			query: value: queryParams
 			# current route
 			route: value: routeDescriptor.n
 			rawParams: value: rawParams
 			params: value: params
-			# posible error
-			error: UNDEFINED_
-		# add to request
-		Object.defineProperties req,
-			res: value: ctx
-			ctx: value: ctx
-			req: value: req
 		# execute middlewares
 		if routeDescriptor.m.length
 			for handler in routeDescriptor.m
@@ -116,7 +111,7 @@ GridFW::handle= (req, ctx)->
 		for handler in routeDescriptor.h
 			resp = await handler ctx
 			# if a value is returned
-			if resp isnt undefined
+			unless ctx.finished or resp in [undefined, ctx]
 				# if view resolver
 				if typeof resp is 'string'
 					ctx.render resp
@@ -128,11 +123,10 @@ GridFW::handle= (req, ctx)->
 				await handler ctx
 	catch e
 		try
-			ctx.error = e
 			# user defined error handlers
 			if routeDescriptor and routeDescriptor.e.length
 				for handler in routeDescriptor.e
-					await handler ctx
+					await handler ctx, e
 			# else
 			else
 				_processUncaughtRequestErrors this, ctx, e

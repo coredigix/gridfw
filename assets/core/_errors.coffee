@@ -34,8 +34,14 @@ _processUncaughtRequestErrors = (app, ctx, error)->
 		switch error
 			# page not found
 			when 404
-				console.error '404>> page not found!'
+				ctx.error 'UNCAUGHT_ERROR', "page not found! #{ctx.url}"
 			else
-				console.error 'Error>> ', error
+				ctx.error 'UNCAUGHT_ERROR', error
 	else
-		console.error 'Error>> ', error
+		ctx.error 'UNCAUGHT_ERROR', error
+
+	# send response
+	unless ctx.headersSent
+		ctx.statusCode = 500
+	# ctx.send 'Internal error'
+	ctx.end()

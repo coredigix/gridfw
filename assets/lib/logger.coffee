@@ -41,7 +41,7 @@ CONSOLE_COLORS=
 
 _createConsoleLogMethod = (level, obj, method)->
 	color = CONSOLE_COLORS[method]
-	mt = "\x1b[7m".concat color, method.toUpperCase(), " \x1b[0m", color
+	mt = "\x1b[7m".concat color, method.toUpperCase(), "\t\x1b[0m", color
 	# fatalError: add blink
 	if method is 'fatalError'
 		mt = "\x1b[5m" + mt
@@ -50,7 +50,7 @@ _createConsoleLogMethod = (level, obj, method)->
 			value: if LEVELS.indexOf(method) < level then _VOID else ->
 				args = Array.from arguments
 				args.unshift mt
-				args.slice 1, 0, '>>'
+				args[1] = args[1] + ">>\t"
 				args.push "\x1b[0m"
 				console.log.apply console, args
 			configurable: true

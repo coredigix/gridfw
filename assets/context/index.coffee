@@ -14,6 +14,11 @@ Request = require './request'
 GError			= require '../lib/error'
 
 DEFAULT_ENCODING = 'utf8'
+# create empty attribute for performance
+UNDEFINED_=
+	value: undefined
+	configurable: true
+	writable: true
 
 ### response ###
 class Context extends http.ServerResponse
@@ -129,8 +134,11 @@ gettersOnce Context.prototype,
 
 ### default values ###
 Object.defineProperties Context.prototype,
-	encoding: value: DEFAULT_ENCODING
-	contentType: value: undefined
+	encoding:
+		value: DEFAULT_ENCODING
+		configurable: true
+		writable: true
+	contentType: UNDEFINED_
 
 	_end: value: Context::end
 	_write: value: Context::write
