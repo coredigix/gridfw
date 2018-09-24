@@ -14,6 +14,12 @@ app.get('/', function(ctx) {
   return ctx.send('Hello world');
 });
 
+// test GET
+app.get('/hello/world', function(ctx) {
+  ctx.info('My service', `---- got ${ctx.path}`);
+  return ctx.send('hello dear');
+});
+
 // run the server at port 3000
 app.listen(3000).then(function() {
   return app.log('Main', `Server listening At: ${app.port}`);

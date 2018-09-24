@@ -38,7 +38,9 @@ DEFAULT_SETTINGS=
 	engines:
 		'.pug': require 'pug'
 	### view folders ###
-	views: ['views']
+	views: [
+		'views' # default folder
+	]
 	###*
 	 * view Cache
 	 * @when off: disable cache
@@ -76,3 +78,7 @@ DEFAULT_SETTINGS=
 	 * @default prod: 'info', dev: 'debug'
 	###
 	logLevel: 'debug'
+
+	### error views ###
+	errorViews:
+		404: path.join __dirname, '../views/404'

@@ -30,11 +30,16 @@
 
 _processUncaughtRequestErrors = (app, ctx, error)->
 	console.error 'Error>> Error handling isn\'t implemented!'
+	settings = app.settings
 	if typeof error is 'number'
 		switch error
 			# page not found
 			when 404
 				ctx.error 'UNCAUGHT_ERROR', "page not found! #{ctx.url}"
+				ctx.render settings.errorViews['404'],
+					code: 404
+					url: ctx.url
+					message: 'File not found'
 			else
 				ctx.error 'UNCAUGHT_ERROR', error
 	else

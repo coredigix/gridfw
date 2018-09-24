@@ -316,15 +316,24 @@ class Route
 		# attach lazy nodes, use this algo to avoid recursive calls
 		currentNodes = [this]
 		nextStepNodes = []
-		loop
-			nextStepNodes.length = 0
+		# loop
+		while currentNodes.length
+			# nextStepNodes.length = 0
 			for currentNode in currentNodes
 				lz = currentNode.lazyAttach
-				_attachNode currentNode, lz[0], lz[1], lz[2]
-				currentNode.lazyAttach = null
-				# add parents if lazy
-				for n in currentNode.parents
-					nextStepNodes.push n if n.lazyAttach
+				if lz
+					# [parent, lazyName, lazyParam]
+					_attachNode currentNode, lz[0], lz[1], lz[2]
+					currentNode.lazyAttach = null
+					# add parents if lazy
+					for n in currentNode.parents
+						nextStepNodes.push n if n.lazyAttach
+			# next step
+			a = currentNodes
+			currentNodes = nextStepNodes
+			nextStepNodes = a
+			a.length = 0
+
 			break unless nextStepNodes.length
 
 		# attach to other parent
@@ -597,14 +606,14 @@ _attachNode = (node, parentNode, nodeName, nodeParamName)->
 	if nodeName
 		# convert to lower case if ignore case is active
 		if node.app.settings.routeIgnoreCase
-			nodeName = nodeName.loLowerCase()
+			nodeName = nodeName.toLowerCase()
 		nodeName = fastDecode nodeName
 		# attach
 		ref = parentNode[FIXED_SUB_ROUTE]
 		if ref.hasOwnProperty nodeName
 			throw new Error 'Route already set' if ref[nodeName] isnt node
 		else
-			ref[nodeName] = route
+			ref[nodeName] = node
 	# as param
 	if nodeParamName
 		idx = parentNode[SR_PARAM_NAMES].indexOf nodeParamName
