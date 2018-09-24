@@ -1,3 +1,4 @@
+'use strict'
 ###*
  * Route
  * @todo add route.path to get full descriptor path of this route
@@ -18,6 +19,7 @@
 
 fastDecode	= require 'fast-decode-uri-component'
 Context		= require '../context'
+http		= require 'http'
 
 class Route
 	###*
@@ -242,7 +244,7 @@ class Route
 	route: (route)->
 		throw new Error "Route expected string, found: #{route}" unless typeof route is 'string'
 		throw new Error "Illegal route: #{route}" if REJ_ROUTE_REGEX.test route
-		settings = @app._settings
+		settings = @app.settings
 		routeIgnoreCase = settings.routeIgnoreCase
 		# remove end spaces and starting slash
 		route = route.trimRight()
@@ -384,6 +386,8 @@ class Route
 
 ### Route Prototype ###
 HTTP_METHODS = http.METHODS
+### others ###
+ROUTE_PROTO = Route.prototype
 
 ### Route handlers ###
 ROUTE_PROTO.HANDLER		= ROUTE_HANDLER		= 0
@@ -401,8 +405,6 @@ SR_PARAM_NAMES			= Symbol 'param names'
 SR_PARAM_REGEXES		= Symbol 'param regexes'
 SR_PARAM_NODES			= Symbol 'param nodes'
 
-### others ###
-ROUTE_PROTO = Route.prototype
 
 ### route to be rejected ###
 REJ_ROUTE_REGEX = /\/\/|\?/
@@ -545,7 +547,7 @@ _rmRouteHandlers = (currentRoute, method, type, handler)->
 
 
 ###*
- * shorthand routes
+ * shorthand routes, support basic methods only
  * @example
  * route.get()
  * 		.then(handler)
@@ -557,7 +559,14 @@ _rmRouteHandlers = (currentRoute, method, type, handler)->
  * route.get('/route', handler)
  * route.get(['/route', '/route2'], handler)
 ###
-HTTP_METHODS.forEach (method, i)->
+[
+	'get'
+	'post'
+	'delete'
+	'head'
+	'patch'
+	'put'
+].forEach (method, i)->
 	# mehtod
 	Object.defineProperty ROUTE_PROTO, method,
 		value: (route, handler)->
@@ -587,7 +596,7 @@ _attachNode = (node, parentNode, nodeName, nodeParamName)->
 	# as static name
 	if nodeName
 		# convert to lower case if ignore case is active
-		if node.app._settings.routeIgnoreCase
+		if node.app.settings.routeIgnoreCase
 			nodeName = nodeName.loLowerCase()
 		nodeName = fastDecode nodeName
 		# attach

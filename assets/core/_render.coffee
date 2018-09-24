@@ -17,7 +17,7 @@ GridFW::render= (templatePath, locals)->
  * @return {Promise<html>}          return compiled HTML
 ###
 GridFW::_render = (templatePath, locals)->
-	settings = @_settings
+	settings = @settings
 	useCache = settings.viewCache
 	# resolve file content
 	throw new Error 'path expected string' unless typeof templatePath is 'string'

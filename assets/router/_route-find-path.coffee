@@ -6,7 +6,7 @@
  * @example
  * /example/path		correct
  * //example////path	correct (as /example/path, multiple slashes are ignored)
- * /example/ (depends on app._settings.tailingSlash)
+ * /example/ (depends on app.settings.tailingSlash)
 ###
 Route::find= (path, method)->
 	throw new Error 'path expected string' unless typeof path is 'string'

@@ -1,5 +1,4 @@
 'use strict'
-
 http		= require 'http'
 fastDecode	= require 'fast-decode-uri-component'
 Buffer		= require('safe-buffer').Buffer
@@ -11,8 +10,7 @@ mimeType	= require 'mime-types'
 
 Request = require './request'
 
-LoggerFactory= require '../lib/logger'
-{gettersOnce} = require '../lib/define-getter-once.coffee'
+{gettersOnce} = require '../lib/define-getter-once'
 GError			= require '../lib/error'
 
 DEFAULT_ENCODING = 'utf8'
@@ -61,32 +59,17 @@ class Context extends http.ServerResponse
 			@setHeader 'content-type', 'text/html'
 			@end html
 
-	###*
-	 * end request
-	###
-	end: (data)->
-		new Promise (resolve, reject)->
-			# send
-			super.end data, (err)->
-				if err then reject err
-				else resolve()
-	### response.write(chunk[, encoding], cb) ###
-	write: (chunk, encoding)->
-		new Promise (res, rej)->
-			super.write chunk, encoding || DEFAULT_ENCODING, (err)->
-				if err then rej err
-				else res()
 	### content type ###
 	type: (type)->
 		throw new Error 'type expected string' unless typeof type is 'string'
 		@contentType = type
 		this
-	# 	switch arguments.length
-	# 		when 1
-	# 			@_type = type
-	# 			this
-	# 		when 0
-	# 			@_type
+		# switch arguments.length
+		# 	when 1
+		# 		@_type = type
+		# 		this
+		# 	when 0
+		# 		@_type
 		# switch arguments.length
 		# 	when 1, 2
 		# 		if type is 'bin'
@@ -105,11 +88,8 @@ class Context extends http.ServerResponse
 	hasType: ->
 		@hasHeader 'content-type'
 
-module.exports = Context
-
-
-# add log support
-LoggerFactory Context.prototype
+# promisify native functions
+# Object.defineProperties 
 
 #=include _context-param-resolvers.coffee
 #=include _send-response.coffee
@@ -151,3 +131,30 @@ gettersOnce Context.prototype,
 Object.defineProperties Context.prototype,
 	encoding: value: DEFAULT_ENCODING
 	contentType: value: undefined
+
+	_end: value: Context::end
+	_write: value: Context::write
+
+Object.defineProperties Context.prototype, 
+	### ends request ###
+	end: value: (data)->
+		new Promise (resolve, reject)=>
+			@_end data, (err)->
+				if err then reject err
+				else do resolve
+	### response.write(chunk[, encoding], cb) ###
+	write: (chunk, encoding)->
+		new Promise (resolve, reject)->
+			@_write chunk, encoding || DEFAULT_ENCODING, (err)->
+				if err then reject err
+				else resolve()
+
+	### commons with Context ###
+	accepts				: value: Request::accepts
+	acceptsEncodings	: value: Request::acceptsEncodings
+	acceptsCharsets		: value: Request::acceptsCharsets
+	acceptsLanguages	: value: Request::acceptsLanguages
+
+
+# exports
+module.exports = Context

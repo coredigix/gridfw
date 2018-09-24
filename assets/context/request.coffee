@@ -1,12 +1,11 @@
 'use strict'
 
 http = require 'http'
-Context = require '.'
 parseRange = require 'range-parser'
 proxyaddr  = require 'proxy-addr'
 fresh		= require 'fresh'
 
-{gettersOnce} = require '../lib/define-getter-once.coffee'
+{gettersOnce} = require '../lib/define-getter-once'
 
 ### response ###
 class Request extends http.IncomingMessage
@@ -66,7 +65,7 @@ gettersOnce Request.prototype,
 	### if we are using https ###
 	secure: -> @protocol in ['https', 'http2'] #TODO check for this
 	### client IP ###
-	ip: proxyaddr this, @app.settings.trustProxyFx
+	ip: -> proxyaddr this, @app.settings.trustProxyFx
 
 	###*
 	 * When "trust proxy" is set, trusted proxy addresses + client.
@@ -146,6 +145,4 @@ props=
 	acceptsLanguages: value: ->
 		acc = @_accepts
 		acc.languages.apply acc, arguments
-
-Object.defineProperties Context.prototype, props
 Object.defineProperties Request.prototype, props

@@ -27,9 +27,14 @@
   "dependencies": {
     "content-disposition": "^0.5.2",
     "encodeurl": "^1.0.2",
+    "fast-decode-uri-component": "^1.0.0",
+    "lru-cache": "^4.1.3",
     "mime-types": "^2.1.20",
     "mz": "^2.7.0",
+    "nvm": "0.0.4",
     "on-finished": "^2.3.0",
+    "proxy-addr": "^2.0.4",
+    "pug": "^2.0.3",
     "send": "^0.16.2"
   },
   "devDependencies": {

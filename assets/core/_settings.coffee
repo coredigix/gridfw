@@ -10,7 +10,7 @@
 ###*
  * default settings
 ###
-GridFW::_settings =
+DEFAULT_SETTINGS= 
 	###
 	use cache for routes, this make it faster
 	to not look for a route each time
@@ -18,7 +18,8 @@ GridFW::_settings =
 	@default on in production mode
 	###
 	routeCache: off
-	routeCacheMax: 50 # route cache max entries
+	# route cache max entries
+	routeCacheMax: 50
 	###*
 	 * Ignore trailing slashes
 	 * 		off	: ignore
@@ -69,3 +70,9 @@ GridFW::_settings =
 	etag: (data) ->
 		#TODO
 		''
+
+	###*
+	 * log level
+	 * @default prod: 'info', dev: 'debug'
+	###
+	logLevel: 'debug'

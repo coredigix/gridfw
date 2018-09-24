@@ -1,13 +1,16 @@
+'use strict'
 http = require 'http'
 path = require 'path'
 fs	 = require 'mz/fs'
-LRUCache	= require 'lru-native'
+LRUCache	= require 'lru-cache'
 
 Context		= require '../context'
 LoggerFactory= require '../lib/logger'
 
 VIEW_CACHE = Symbol 'view cache'
 ROUTE_CACHE = Symbol 'route cache'
+
+Route		= require '../router/route'
 
 # create empty attribute for performance
 UNDEFINED_=
@@ -29,15 +32,15 @@ class GridFW extends Route
 		super()
 		# settings
 		settings ?= {}
-		Object.setPrototypeOf settings, GridFW::_settings
+		Object.setPrototypeOf settings, DEFAULT_SETTINGS
 		# view cache
 		if settings.viewCache
 			viewCache = new LRUCache
-				maxElements: settings.viewCacheMax
+				max: settings.viewCacheMax
 		# routing cache
 		if settings.routeCache
 			routeCache = new LRUCache
-				maxElements: settings.routeCacheMax
+				max: settings.routeCacheMax
 		# attributes
 		Object.defineProperties this,
 			### auto reference ###
@@ -51,18 +54,17 @@ class GridFW extends Route
 			server: UNDEFINED_
 			### locals ###
 			locals: value: {}
-			### render function ###
-			render: value: renderTemplates
 			### settings ###
-			_settings: value: settings
+			settings: value: settings
 			### view cache, enable it depending  ###
 			[VIEW_CACHE]: value: viewCache
 			### route cache ###
 			[ROUTE_CACHE]: value: routeCache
 
-
-# add log support
-LoggerFactory GridFW.prototype
+		# add log support
+		logOptions = level: @settings.logLevel
+		LoggerFactory GridFW.prototype, logOptions
+		LoggerFactory Context.prototype, logOptions
 
 
 #=include _settings.coffee
@@ -99,3 +101,6 @@ _console_welcome = (app) ->
 	\t✔︎ Admin Email: #{app.settings.adminEmail}
 	"""
 	console.log "└─────────────────────────────────────────────────────────────────────────────────────────┘\e[0m"
+
+# exports
+module.exports = GridFW

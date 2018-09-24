@@ -14,7 +14,7 @@ DEFAULT_PROTOCOL = 'http'
  * 		protocol: 'http' or 'https' or 'http2'
 ###
 GridFW::listen= (options)->
-	new Promise (res, rej)->
+	new Promise (res, rej)=>
 		# options
 		unless options
 			options = {}
@@ -23,13 +23,11 @@ GridFW::listen= (options)->
 		else if typeof options isnt 'object'
 			throw new Error 'Illegal argument'
 		# get server factory
-		servFacto = options.protocol
-		if servFacto
-			throw new Error "Protocol expected string" unless typeof servFacto is 'string'
-			servFacto = SERVER_LISTENING_PROTOCOLS[servFacto.toLowerCase()]
-			throw new Error "Unsupported protocol: #{options.protocol}" unless servFacto
-		else
-			servFacto = SERVER_LISTENING_PROTOCOLS[DEFAULT_PROTOCOL]
+		protocol = options.protocol || DEFAULT_PROTOCOL
+		throw new Error "Protocol expected string" unless typeof protocol is 'string'
+		protocol = protocol.toLowerCase()
+		servFacto = SERVER_LISTENING_PROTOCOLS[protocol]
+		throw new Error "Unsupported protocol: #{options.protocol}" unless servFacto
 		# create server
 		server = servFacto options, this
 
@@ -51,6 +49,9 @@ GridFW::listen= (options)->
 						ipType	: value: info.family
 						host	: value: options.host || 'localhost'
 						path	: value: options.path || '/'
+						protocol: value: protocol
+					# info
+					@info 'CORE', "Server listening At: #{@protocol}://#{@host}:#{@port}#{@path}"
 					# resolve
 					res this
 				catch e
@@ -61,7 +62,8 @@ GridFW::listen= (options)->
 ### make server listening depending on the used protocol ###
 SERVER_LISTENING_PROTOCOLS=
 	http: (options, app)->
-		server = app.server = http.createServer
+		app.debug 'CORE', 'Create HTTP server'
+		http.createServer
 			IncomingMessage : Context.Request
 			ServerResponse : Context
 			,

@@ -7,7 +7,6 @@ GridFw = require '..'
 # create server
 app = new GridFw()
 
-
 # append Get route
 app.get '/', (ctx)->
 	ctx.info 'My service', '--- Path "/" called'

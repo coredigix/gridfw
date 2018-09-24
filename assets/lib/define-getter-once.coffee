@@ -12,17 +12,17 @@ module.exports =
 				value
 
 	# define multiple getters
-	getterOnce: (proto, descriptor)->
+	gettersOnce: (proto, descriptor)->
 		# init descriptor
 		for k,v of descriptor
 			throw new Error "Illegal getter of #{k}" unless typeof v is 'function'
 			descriptor[k] = _getterProxy k, v
 		# define
-		proto.defineProperties proto, descriptor
+		Object.defineProperties proto, descriptor
 
 
 _getterProxy = (k, v)->
-	->
+	value: ->
 		value = v.call this
 		Object.defineProperty this, k, value: value
 		value
