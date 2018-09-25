@@ -51,6 +51,8 @@ GridFW::handle= (req, ctx)->
 			# url
 			path: value: rawPath
 			rawQuery: value: rawUrlQuery
+			# locals
+			locals: value: Object.create @locals
 		# add to request
 		Object.defineProperties req,
 			res: value: ctx
@@ -114,9 +116,9 @@ GridFW::handle= (req, ctx)->
 			unless ctx.finished or resp in [undefined, ctx]
 				# if view resolver
 				if typeof resp is 'string'
-					ctx.render resp
+					await ctx.render resp
 				else
-					ctx.send resp
+					await ctx.send resp
 		# execute post handlers
 		if routeDescriptor.ps.length
 			for handler in routeDescriptor.ps
@@ -129,8 +131,14 @@ GridFW::handle= (req, ctx)->
 					await handler ctx, e
 			# else
 			else
-				_processUncaughtRequestErrors this, ctx, e
+				await _processUncaughtRequestErrors this, ctx, e
 		catch err
-			_processUncaughtRequestErrors this, ctx, err
+			await _processUncaughtRequestErrors this, ctx, err
+			.catch (err) => @fatalError 'HANDLE-REQUEST', err
+	finally
+		# close the request if not yeat closed
+		unless ctx.finished
+			ctx.warn 'HANDLE-REQUEST', 'Request leaved inclose!'
+			await ctx.end()
 	return
 	

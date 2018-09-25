@@ -26,6 +26,7 @@
   "homepage": "https://github.com/coredigix/gridfw#readme",
   "dependencies": {
     "content-disposition": "^0.5.2",
+    "create-symlink": "^1.0.0",
     "encodeurl": "^1.0.2",
     "fast-decode-uri-component": "^1.0.0",
     "lru-cache": "^4.1.3",

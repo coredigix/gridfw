@@ -1,4 +1,4 @@
-var PluginError, cliTable, coffeescript, compileCoffee, compileTest, errorHandler, gulp, gutil, include, rename, watch;
+var PluginError, cliTable, coffeescript, compileCoffee, compileTest, errorHandler, gulp, gutil, include, lnk, rename, watch;
 
 gulp = require('gulp');
 
@@ -14,6 +14,9 @@ coffeescript = require('gulp-coffeescript');
 PluginError = gulp.PluginError;
 
 cliTable = require('cli-table');
+
+const {symlink} = require('fs');
+const path = require('path')
 
 // handlers
 compileCoffee = function() {
@@ -81,3 +84,8 @@ errorHandler = function(err) {
 
 // default task
 gulp.task('default', gulp.series(compileCoffee, compileTest, watch));
+
+// create sym links
+symlink(path.join(__dirname, 'assets/views'), path.join(__dirname, 'build/views'), 'dir', (err)=>{
+  console.log('----+++--', err)
+});

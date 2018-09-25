@@ -26,24 +26,33 @@
 # 		Object.defineProperties this,
 # 			path: value: path
 # ------------------
-# 404: not found
+# 
 
 _processUncaughtRequestErrors = (app, ctx, error)->
 	console.error 'Error>> Error handling isn\'t implemented!'
-	settings = app.settings
-	if typeof error is 'number'
-		switch error
-			# page not found
-			when 404
-				ctx.error 'UNCAUGHT_ERROR', "page not found! #{ctx.url}"
-				ctx.render settings.errorViews['404'],
-					code: 404
-					url: ctx.url
-					message: 'File not found'
-			else
-				ctx.error 'UNCAUGHT_ERROR', error
+	errorSettings = app.settings.errors
+
+
+	# log this error
+	if error is 404 # path not found
+		ctx.debug 'Page not found', ctx.url
+		tempate = errorSettings[404]
+		status = 404
 	else
-		ctx.error 'UNCAUGHT_ERROR', error
+		# error
+		unless error
+			error = new GError 520, 'Unknown Error!'
+		else unless typeof error is 'object'
+			error= new GError 500, error
+		ctx.fatalError 'UNCAUGHT_ERROR', error
+		status = error.code || 500
+		tempate = errorSettings[status] || errorSettings[500]
+
+
+	# render view
+	unless ctx.finished
+		ctx.statusCode = error.code or 500
+		await ctx.render tempate, error
 
 	# send response
 	unless ctx.headersSent

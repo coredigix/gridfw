@@ -80,5 +80,6 @@ DEFAULT_SETTINGS=
 	logLevel: 'debug'
 
 	### error views ###
-	errorViews:
-		404: path.join __dirname, '../views/404'
+	errors:
+		404: path.join __dirname, '../views/errors/404'
+		500: path.join __dirname, '../views/errors/500'

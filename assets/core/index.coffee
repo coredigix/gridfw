@@ -6,6 +6,7 @@ LRUCache	= require 'lru-cache'
 
 Context		= require '../context'
 LoggerFactory= require '../lib/logger'
+GError		= require '../lib/error'
 
 VIEW_CACHE = Symbol 'view cache'
 ROUTE_CACHE = Symbol 'route cache'
@@ -53,7 +54,8 @@ class GridFW extends Route
 			### underline server###
 			server: UNDEFINED_
 			### locals ###
-			locals: value: {}
+			locals: value:
+				_app: this
 			### settings ###
 			settings: value: settings
 			### view cache, enable it depending  ###

@@ -39,7 +39,7 @@ GridFW::_render = (templatePath, locals)->
 				if template.content?
 					break
 		unless template.content?
-			throw 404 # page not found
+			throw new GError 501, "Missing template: #{filePath}"
 
 		# compile template
 		renderFx = template.module.compile template.content,
@@ -60,10 +60,12 @@ _loadTemplateFileContent= (engines, filePath) ->
 		module: null
 	for ext, module of engines
 		try
+			console.log '--- read file: ', if filePath.endsWith ext then filePath else filePath + ext
 			result.content	= await fs.readFile if filePath.endsWith ext then filePath else filePath + ext
 			result.module	= module
 			break
 		catch err
+			console.log 'error Code: ', err
 			if err and err.code is 'ENOENT'
 				# file not found, go to next file
 			else

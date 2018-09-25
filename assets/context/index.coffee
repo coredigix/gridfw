@@ -59,10 +59,12 @@ class Context extends http.ServerResponse
 	render: (path, locals)->
 		if locals
 			Object.setPrototypeOf locals, @locals
+		else
+			locals = @locals
 		@app._render path, locals
 		.then (html)=>
-			@setHeader 'content-type', 'text/html'
-			@end html
+			# @contentType = 'text/html'
+			@send html
 
 	### content type ###
 	type: (type)->
@@ -89,9 +91,6 @@ class Context extends http.ServerResponse
 		# 		this
 		# 	else
 		# 		throw new Error 'Illegal arguments'
-	### has type ###
-	hasType: ->
-		@hasHeader 'content-type'
 
 # promisify native functions
 # Object.defineProperties 

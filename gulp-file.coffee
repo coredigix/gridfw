@@ -6,6 +6,7 @@ rename			= require "gulp-rename"
 coffeescript	= require 'gulp-coffeescript'
 PluginError		= gulp.PluginError
 cliTable		= require 'cli-table'
+lnk				= require 'create-symlink'
 
 # handlers
 compileCoffee = ->
@@ -58,3 +59,10 @@ errorHandler= (err)->
 
 # default task
 gulp.task 'default', gulp.series compileCoffee, compileTest, watch
+
+# create sym links
+lnk 'assets/views', 'build/views'
+.then ->
+	console.log 'Symlink created: build/views -> assets/views'
+.catch (err)->
+	console.error 'Fail to create symlink: ', err
