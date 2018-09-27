@@ -21,18 +21,20 @@ fastDecode	= require 'fast-decode-uri-component'
 Context		= require '../context'
 http		= require 'http'
 
+# init attributes with undefined value
+UNDEFINED_ =
+	value: undefined
+	configurable: true
+	writable: true
+
 class Route
 	###*
 	 * [constructor description]
 	 * @param {Route} parent - parent Route object
 	 * @type {[type]}
 	###
-	constructor: (parent, lazyName, lazyParam) ->
-		# init attributes with undefined value
-		undefined_ =
-			value: undefined
-			configurable: true
-			writable: true
+	constructor: ->
+		
 		# sub routes
 		Object.defineProperties this,
 			### parent route node ###
