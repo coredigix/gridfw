@@ -1,4 +1,5 @@
 'use strict'
+
 http = require 'http'
 path = require 'path'
 fs	 = require 'mz/fs'
@@ -13,96 +14,64 @@ ROUTE_CACHE = Symbol 'route cache'
 
 Route		= require '../router/route'
 
+# 
+APP_MODES = [
+	'DEV' # developpement
+	'PROD' # production
+]
+
 # create empty attribute for performance
-UNDEFINED_=
+UNDEFINED=
 	value: undefined
 	configurable: true
 	writable: true
 
-###*
- * framework core
-###
+# view cache
+VIEW_CACHE = Symbol 'View cache'
 
-class GridFW extends Route
-	###*
-	 * @param  {number} settings [description]
-	 * @return {[type]}          [description]
-	###
-	constructor: (settings)->
-		# super
-		super()
+class GridFW
+	constructor: (options)->
+		# 
+		throw new Error "Illegal mode: #{options.mode}" if options.mode and options.mode not in ['dev', 'prod']
 		# settings
-		settings ?= {}
-		Object.setPrototypeOf settings, DEFAULT_SETTINGS
-		# view cache
-		if settings.viewCache
-			viewCache = new LRUCache
-				max: settings.viewCacheMax
-		# routing cache
-		if settings.routeCache
-			routeCache = new LRUCache
-				max: settings.routeCacheMax
-		# attributes
-		Object.defineProperties this,
-			### auto reference ###
-			app: value: this
-			### app port ###
-			port: UNDEFINED_
-			host: UNDEFINED_
-			### app basic path ###
-			path: UNDEFINED_
-			### underline server###
+		settings = Object.create DEFAULT_SETTINGS
+		# locals
+		locals =
+			_app: this
+		# define properties
+		Object.defineProperties
+			# mode
+			mode: value: options.mode || 'dev'
+			### App connection ###
 			server: UNDEFINED_
-			### locals ###
-			locals: value:
-				_app: this
-			### settings ###
+			protocol: UNDEFINED_
+			host: UNDEFINED_
+			port: UNDEFINED_
+			path: UNDEFINED_
+			# settings
+			s: value: settings
 			settings: value: settings
-			### view cache, enable it depending  ###
-			[VIEW_CACHE]: value: viewCache
-			### route cache ###
-			[ROUTE_CACHE]: value: routeCache
-
+			# locals
+			locals: value: locals
+			data: value: locals
+			# view cache
+			[VIEW_CACHE]: UNDEFINED
 		# add log support
-		logOptions = level: @settings.logLevel
+		logOptions = level: @s.logLevel
 		LoggerFactory GridFW.prototype, logOptions
 		LoggerFactory Context.prototype, logOptions
 
-
-#=include _settings.coffee
-#=include _render.coffee
-#=include _handle-request.coffee
-#=include _listen.coffee
-#=include _errors.coffee
 
 # getters
 Object.defineProperties GridFW.prototype,
 	### if the server is listening ###
 	listening: get: -> @server?.listening || false
 
-# show welcome message if called directly
-if require.main is module
-	console.error "GridFW>> Could not be self run, See @Doc for more info, or run example"
+# default mode (developpement)
+GridFW::mode = 'dev'
 
-# print console welcome message
-_console_welcome = (app) ->
-	console.log "\e[94m┌─────────────────────────────────────────────────────────────────────────────────────────┐"
-	# if dev mode or procution
-	if app.mode is 'prod'
-		console.warn "GridFW>> ✔ Production Mode"
-	else
-		console.warn "\e[93GridFW>> Developpement Mode\n\t⚠ Do not forget to enable production mode to boost performance\e[0m\e[94m"
-	# server params
-	console.log """
-	GridFW>> Running The server As:
-	\t✔︎ Name: #{app.name}
-	\t✔︎ Port: #{app.port}
-	\t✔︎ Path: #{app.path}
-	\t✔︎ Host: #{app.host}
-	\t✔︎ Autor: #{app.settings.autor}
-	\t✔︎ Admin Email: #{app.settings.adminEmail}
-	"""
-	console.log "└─────────────────────────────────────────────────────────────────────────────────────────┘\e[0m"
+#=include _settings.coffee
+#=include log_welcome.coffee
 
 # exports
 module.exports = GridFW
