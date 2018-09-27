@@ -9,10 +9,8 @@ Context		= require '../context'
 LoggerFactory= require '../lib/logger'
 GError		= require '../lib/error'
 
-VIEW_CACHE = Symbol 'view cache'
-ROUTE_CACHE = Symbol 'route cache'
-
 Route		= require '../router/route'
+RouteNode	= require '../router/route-node'
 
 # 
 APP_MODES = [
@@ -26,20 +24,37 @@ UNDEFINED=
 	configurable: true
 	writable: true
 
-# view cache
+# View cache
 VIEW_CACHE = Symbol 'View cache'
+# Routes
+ALL_ROUTES	= Symbol 'All routes'
+FIXED_ROUTES	= Symbol 'Fixed routes'
+CACHED_ROUTES	= Symbol 'Cached_routes'
+REGEX_ROUTES	= Symbol 'Regex routes'
+
+
+# consts
+HTTP_METHODS = http.METHODS
 
 class GridFW
+	###*
+	 * 
+	 * @param  {string} options.mode - execution mode: dev or prod
+	 * @param  {number} options.routeCache - Route cache size
+	 * @param  {[type]} options [description]
+	 * @return {[type]}         [description]
+	###
 	constructor: (options)->
 		# 
 		throw new Error "Illegal mode: #{options.mode}" if options.mode and options.mode not in ['dev', 'prod']
+		throw new Errir 'options.routeCache expected number' if options.routeCache and not Number.isSafeInteger options.routeCache
 		# settings
 		settings = Object.create DEFAULT_SETTINGS
 		# locals
-		locals =
-			_app: this
+		locals = Object.create null,
+			_app: value: this
 		# define properties
-		Object.defineProperties
+		Object.defineProperties this,
 			# mode
 			mode: value: options.mode || 'dev'
 			### App connection ###
@@ -56,6 +71,12 @@ class GridFW
 			data: value: locals
 			# view cache
 			[VIEW_CACHE]: UNDEFINED
+			# Routes
+			[ALL_ROUTES]: Object.create null
+			[FIXED_ROUTES]: Object.create null
+			#TODO check if this cache optimise performance for 20 routes
+			[CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
+			[REGEX_ROUTES]: []
 		# add log support
 		logOptions = level: @s.logLevel
 		LoggerFactory GridFW.prototype, logOptions

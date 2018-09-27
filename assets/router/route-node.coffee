@@ -13,10 +13,10 @@ UNDEFINED =
 	configurable: true
 
 class RouteNode
-	constructor: (app, path)->
+	constructor: (app, routeObj)->
 		Object.defineProperties this,
 			app: value: app
-			path: value: path
+			route: value: routeObj
 			# settings
 			s: value: app.s
 			settings: value: app.s

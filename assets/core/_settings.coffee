@@ -8,3 +8,7 @@ DEFAULT_SETTINGS =
 	 * @default prod: 'info', dev: 'debug'
 	###
 	logLevel: 'debug'
+	###*
+	 * Route cache
+	###
+	routeCacheMax: 50
