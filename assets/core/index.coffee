@@ -92,7 +92,9 @@ Object.defineProperties GridFW.prototype,
 GridFW::mode = 'dev'
 
 #=include _settings.coffee
-#=include log_welcome.coffee
+#=include _log_welcome.coffee
+#=include _add_routes.coffee
+#=include _add_routes_builder.coffee
 
 # exports
 module.exports = GridFW

@@ -35,36 +35,33 @@ Object.defineProperties GridFW.prototype,
 	 * 		
 	###
 	on: (method, route, handler)->
-		# check method
-		throw new Error 'method expected string' unless typeof method is 'string'
-		method = method.toUpperCase()
-		throw new Error "Unknown http method [#{method}]" unless method in HTTP_METHODS
-		# check route
-		throw new Error 'route expected string or regex' unless typeof route is 'string' or route instanceof RegExp
-		# create route
-		routeKey = route.toString()
-		routeObj = @[ALL_ROUTES][routeKey] ?= new Route key: route
-		# create route node
-		routeNode = routeObj[method] ?= new RouteNode this, routeObj
 		# Add handlers
 		switch arguments.length
 			# .on 'GET', '/route', handler
 			when 3
 				throw new Error 'handler expected function' unless typeof handler is 'function'
-				throw new Error 'handler could take only one argument' if handler.lenght > 1
-				_createRouteNode method, route, (node)->
-					node.h = handler
+				throw new Error 'handler could take only one argument' if handler.length > 1
+				_createRouteNode this, method, route, c: handler
+				# chain
+				this
 			# .on 'GET', '/route'
+			# create new node only if controller is specified, add handler to other routes otherwise
 			when 2
 				# do builder
-				_routeBuiler routeNode
+				return new _RouteBuiler this, (node)->
+					if node.c
+						_createRouteNode this, method, route, node
+					else
+						#TODO
+						throw new Error 'Add handlers to other routes not yeat implemented!'
 			else
 				throw new Error 'Illegal arguments'
-		# chain
-		this
 	###*
 	 * Remove route
-	 * TODO
+	 * @example
+	 * .off('alll', '/route', hander) # remove this handler (as controller, preprocess, postprocess, errorHander, ...)
+	 * 									from this route for all http methods
+	 * .off('GET', '/route') # remove this route
 	###
 	#TODO remove route, post process or any handler
 	off: (method, route, handler)->
@@ -73,7 +70,7 @@ Object.defineProperties GridFW.prototype,
 		method = method.toUpperCase()
 		throw new Error "Unknown http method [#{method}]" unless method in HTTP_METHODS
 		# exec
-		switch arguments.lenght
+		switch arguments.length
 			# off(method, route)
 			when 2:
 				if method
@@ -82,4 +79,58 @@ Object.defineProperties GridFW.prototype,
 ###*
  * Create route node
 ###
-_createRouteNode = ()
+_createRouteNode = (app, method, route, nodeAttrs)->
+	# flatten method
+	if Array.isArray method
+		for v in method
+			_createRouteNode app, v, route, nodeAttrs
+		return
+	# check method
+	throw new Error 'method expected string' unless typeof method is 'string'
+	method = method.toUpperCase()
+	throw new Error "Unknown http method [#{method}]" unless method is 'ALL' || method in HTTP_METHODS
+	# flatten route
+	if Array.isArray route
+		for v in route
+			_createRouteNode app, method, v, nodeAttrs
+		return
+	# check route
+	throw new Error 'route expected string or regex' unless typeof route is 'string' or route instanceof RegExp
+	# create route
+	routeKey = route.toString()
+	routeObj = app[ALL_ROUTES][routeKey]
+	if routeObj
+		# check has not already an 'all' method
+		if nodeAttrs.c and routeObj.ALL?.c
+			throw new Error "A controller alreay set to all http methods on this route: #{route}"
+	else
+		routeObj = app[ALL_ROUTES][routeKey] = new Route key: route
+	# create route node
+	routeNode = routeObj[method]
+	if routeNode
+		if nodeAttrs.c and routeNode.c
+			throw new Error "A controller already set to this route: #{method} #{route}"
+	else
+		routeNode = routeObj[method] = new RouteNode this, routeObj
+	# add handlers
+	for k, v of nodeAttrs
+		if typeof v is 'function'
+			routeNode[k] = v
+		else if Array.isArray v
+			ref= routeNode[k]
+			# append handlers
+			if ref
+				for a in v
+					ref.push a
+			# add the whole array
+			else
+				routeNode[k] = v
+		else
+			throw new Error 'Enexpected nodeAttrs'
+	# param resolvers
+		ref = routeNode.pm
+		for k,v of nodeAttrs.pm
+			throw new Error "Param [#{k}] already set to route #{method} #{route}" if ref[k]
+			ref[k] = v
+	return
+
