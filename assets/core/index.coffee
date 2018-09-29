@@ -9,7 +9,7 @@ Context		= require '../context'
 LoggerFactory= require '../lib/logger'
 GError		= require '../lib/error'
 
-Route		= require '../router/route'
+RouteMapper	= require '../router/route-mapper'
 RouteNode	= require '../router/route-node'
 
 # 
@@ -95,8 +95,7 @@ GridFW::mode = 'dev'
 
 #=include _settings.coffee
 #=include _log_welcome.coffee
-#=include _add_routes.coffee
-#=include _add_routes_builder.coffee
+#=include router/_index.coffee
 
 # exports
 module.exports = GridFW

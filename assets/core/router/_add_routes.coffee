@@ -1,5 +1,16 @@
 ###*
  * Add routes
+ * Supported routes
+ **** static routes
+ * /path/to/static/route
+ * /path/containing/*stars/is-supported
+ **** to escape "*" and ":" use "*?" and ":?"
+ * /wildcard/in/the/last/mast/be/escaped/*?
+ * /semi/:?colone/mast/be/escaped:if:after:slash:only
+ **** dynamic path
+ * /dynamic/:param1/path/:param2
+ * /dynamic/:param/* # the rest of path will be stored inside param called "*"
+ * /dynamic/:param/:rest* # the rest of path will be stored in the param "rest"
 ###
 Object.defineProperties GridFW.prototype,
 	###*
@@ -34,7 +45,7 @@ Object.defineProperties GridFW.prototype,
 	 * 		.finally(ctx =>{}) # post process
 	 * 		
 	###
-	on: (method, route, handler)->
+	on: value: (method, route, handler)->
 		# Add handlers
 		switch arguments.length
 			# .on 'GET', '/route', handler
@@ -48,12 +59,7 @@ Object.defineProperties GridFW.prototype,
 			# create new node only if controller is specified, add handler to other routes otherwise
 			when 2
 				# do builder
-				return new _RouteBuiler this, (node)->
-					if node.c
-						_createRouteNode this, method, route, node
-					else
-						#TODO
-						throw new Error 'Add handlers to other routes not yeat implemented!'
+				return new _RouteBuiler this, (node)-> _createRouteNode this, method, route, node
 			else
 				throw new Error 'Illegal arguments'
 	###*
@@ -64,7 +70,7 @@ Object.defineProperties GridFW.prototype,
 	 * .off('GET', '/route') # remove this route
 	###
 	#TODO remove route, post process or any handler
-	off: (method, route, handler)->
+	off: value: (method, route, handler)->
 		# check method
 		throw new Error 'method expected string' unless typeof method is 'string'
 		method = method.toUpperCase()
@@ -77,7 +83,7 @@ Object.defineProperties GridFW.prototype,
 
 
 ###*
- * Create route node
+ * Create route node or add handlers to other routes
 ###
 _createRouteNode = (app, method, route, nodeAttrs)->
 	# flatten method
@@ -95,42 +101,34 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 			_createRouteNode app, method, v, nodeAttrs
 		return
 	# check route
-	throw new Error 'route expected string or regex' unless typeof route is 'string' or route instanceof RegExp
-	# create route
-	routeKey = route.toString()
-	routeObj = app[ALL_ROUTES][routeKey]
-	if routeObj
-		# check has not already an 'all' method
-		if nodeAttrs.c and routeObj.ALL?.c
-			throw new Error "A controller alreay set to all http methods on this route: #{route}"
-	else
-		routeObj = app[ALL_ROUTES][routeKey] = new Route key: route
-	# create route node
-	routeNode = routeObj[method]
-	if routeNode
-		if nodeAttrs.c and routeNode.c
-			throw new Error "A controller already set to this route: #{method} #{route}"
-	else
-		routeNode = routeObj[method] = new RouteNode this, routeObj
-	# add handlers
-	for k, v of nodeAttrs
-		if typeof v is 'function'
-			routeNode[k] = v
-		else if Array.isArray v
-			ref= routeNode[k]
-			# append handlers
-			if ref
-				for a in v
-					ref.push a
-			# add the whole array
-			else
-				routeNode[k] = v
+	throw new Error 'route expected string' unless typeof route is 'string'
+	throw new Error "Incorrect route: #{route}" if /^\?|[^:*]\?/.test route
+	# check if it is a static or dynamic route
+	isDynamic = /\/:[^?]|*$/.test route
+	# route key
+	routeKey = if isDynamic then route.replace(/([:*])/g, '$1?') else route.replace /([:*])\?/g, '$1'
+	# get some already created node if exists
+	allRoutes = app[ALL_ROUTES]
+	routeMapper = allRoutes[routeKey]
+	# if dynamic route
+	if isDynamic
+		# if has controller, create the route
+		if nodeAttrs.c
+			# create mapper if not exists
+			unless routeMapper
+				routeMapper= allRoutes[routeKey] = new RouteMapper app, route
+			# add handlers to route
+			routeMapper.append method, nodeAttrs
+		# else add handler to any route or future route that matches
 		else
-			throw new Error 'Enexpected nodeAttrs'
-	# param resolvers
-		ref = routeNode.$
-		for k,v of nodeAttrs.$
-			throw new Error "Param [#{k}] already set to route #{method} #{route}" if ref[k]
-			ref[k] = v
+			@_registerRouteHandlers app, route, nodeAttrs
+	# if static route, create node even no controller is specified
+	else
+		# create route mapper if not exists
+		unless routeMapper
+			routeMapper= allRoutes[routeKey] = new RouteMapper app, route
+		# add handler to node
+		routeMapper.append method, nodeAttrs
+	# ends
 	return
 
