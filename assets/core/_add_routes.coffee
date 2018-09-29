@@ -128,8 +128,8 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 		else
 			throw new Error 'Enexpected nodeAttrs'
 	# param resolvers
-		ref = routeNode.pm
-		for k,v of nodeAttrs.pm
+		ref = routeNode.$
+		for k,v of nodeAttrs.$
 			throw new Error "Param [#{k}] already set to route #{method} #{route}" if ref[k]
 			ref[k] = v
 	return

@@ -69,6 +69,8 @@ class GridFW
 			# locals
 			locals: value: locals
 			data: value: locals
+			# param handlers
+			$: value: Object.create null
 			# view cache
 			[VIEW_CACHE]: UNDEFINED
 			# Routes

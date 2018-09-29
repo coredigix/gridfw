@@ -17,7 +17,7 @@ class _RouteBuiler
 			c: UNDEFINED # controller
 			p: UNDEFINED # post process
 			e: UNDEFINED # error handler
-			pm: value: {} # param handlers
+			$: value: {} # param handlers
 			# set timeout to build
 			_build = setImmediate => do @build
 
@@ -140,7 +140,7 @@ class _RouteBuiler
 	###
 	filter: (handler)->
 		throw new Error 'Filter expected function' unless typeof handler is 'function'
-		@p.push handler
+		( @f =? [] ).push handler
 		# chain
 		this
 	###*
@@ -151,8 +151,8 @@ class _RouteBuiler
 		throw new Error 'regex expected RegExp' unless regex instanceof RegExp
 		throw new Error 'resolver expect function' unless typeof resolver is 'function'
 
-		throw new Error "Param name [#{name}] already set" if @pm[name]
-		@pm[name] =
+		throw new Error "Param name [#{name}] already set" if @$[name]
+		@$[name] =
 			x: regex
 			r: resolver
 Object.defineProperty _RouteBuiler, 'end', get: -> do @build

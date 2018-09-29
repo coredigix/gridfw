@@ -31,4 +31,4 @@ class RouteNode
 			# Error handlers (undefined or list of handlers)
 			e: UNDEFINED
 			# path and query params (object)
-			pm: value: Object.create app.pm
+			$: value: Object.create app.$
