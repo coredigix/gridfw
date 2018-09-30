@@ -76,16 +76,20 @@ Object.defineProperties GridFW.prototype,
 		method = method.toUpperCase()
 		throw new Error "Unknown http method [#{method}]" unless method in HTTP_METHODS
 		# exec
-		switch arguments.length
-			# off(method, route)
-			when 2:
-				if method
+		# switch arguments.length
+		# 	# off(method, route)
+		# 	when 2:
+		# 		if method
+		#TODO
 
 
 ###*
  * Create route node or add handlers to other routes
 ###
 _createRouteNode = (app, method, route, nodeAttrs)->
+	# settings
+	settings = app.s
+	# remove stailing
 	# flatten method
 	if Array.isArray method
 		for v in method
@@ -129,6 +133,9 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 			routeMapper= allRoutes[routeKey] = new RouteMapper app, route
 		# add handler to node
 		routeMapper.append method, nodeAttrs
+		# map as static route if has controller
+		if nodeAttrs.c
+			app[STATIC_ROUTES][route] = routeMapper
 	# ends
 	return
 

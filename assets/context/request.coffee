@@ -56,7 +56,7 @@ gettersOnce Request.prototype,
 		#Check for HTTP2
 		protocol = if @connection.encrypted then 'https' else 'http'
 		# if trust immediate proxy headers
-		if @app.settings.trustProxyFx this, 0
+		if @s[<?= settings.trustProxyFunction ?>] this, 0
 			h = @getHeader 'X-Forwarded-Proto'
 			if h
 				i = h.indexOf ','
@@ -65,7 +65,7 @@ gettersOnce Request.prototype,
 	### if we are using https ###
 	secure: -> @protocol in ['https', 'http2'] #TODO check for this
 	### client IP ###
-	ip: -> proxyaddr this, @app.settings.trustProxyFx
+	ip: -> proxyaddr this, @s[<?= settings.trustProxyFunction ?>]
 
 	###*
 	 * When "trust proxy" is set, trusted proxy addresses + client.
@@ -79,7 +79,7 @@ gettersOnce Request.prototype,
 	 * @public
 	###
 	ips: ->
-		addrs = proxyaddr this, @app.settings.trustProxyFx
+		addrs = proxyaddr this, @s[<?= settings.trustProxyFunction ?>]
 		addrs.reverse().pop()
 		addrs
 	###*
@@ -92,7 +92,7 @@ gettersOnce Request.prototype,
 	 * @return {String}
 	###
 	hostname: ->
-		trust = @app.settings.trustProxyFx
+		trust = @s[<?= settings.trustProxyFunction ?>]
 		host = @getHeader('X-Forwarded-Host')
 		if host and trust @connection.remoteAddress, 0
 			host #TODO check for IPv6 lateral support

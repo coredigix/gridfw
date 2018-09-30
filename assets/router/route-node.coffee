@@ -19,7 +19,6 @@ class RouteNode
 			route: value: routeObj
 			# settings
 			s: value: app.s
-			settings: value: app.s
 			# middlewares (list of or undefined)
 			m: UNDEFINED
 			# filters (list of handlers or undefined)

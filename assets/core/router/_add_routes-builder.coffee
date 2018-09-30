@@ -140,7 +140,7 @@ class _RouteBuiler
 	###
 	filter: (handler)->
 		throw new Error 'Filter expected function' unless typeof handler is 'function'
-		( @f =? [] ).push handler
+		( @f ?= [] ).push handler
 		# chain
 		this
 	###*

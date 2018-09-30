@@ -28,7 +28,7 @@ UNDEFINED=
 VIEW_CACHE = Symbol 'View cache'
 # Routes
 ALL_ROUTES	= Symbol 'All routes'
-FIXED_ROUTES	= Symbol 'Fixed routes'
+STATIC_ROUTES	= Symbol 'Fixed routes'
 CACHED_ROUTES	= Symbol 'Cached_routes'
 REGEX_ROUTES	= Symbol 'Regex routes'
 
@@ -46,17 +46,19 @@ class GridFW
 	###
 	constructor: (options)->
 		# 
-		throw new Error "Illegal mode: #{options.mode}" if options.mode and options.mode not in ['dev', 'prod']
+		throw new Error "Illegal mode: #{options.mode}, please use: dev or prod" if options.mode and options.mode not in ['dev', 'prod']
 		throw new Errir 'options.routeCache expected number' if options.routeCache and not Number.isSafeInteger options.routeCache
-		# settings
-		settings = Object.create DEFAULT_SETTINGS
+		# mode
+		mode = if options.mode is 'prod' then <?= app.DEV ?> else <?= app.PROD ?>
 		# locals
 		locals = Object.create null,
 			_app: value: this
+		# settings
+		settings = DEFAULT_SETTINGS.slice 0
 		# define properties
 		Object.defineProperties this,
 			# mode
-			mode: value: options.mode || 'dev'
+			mode: value: mode
 			### App connection ###
 			server: UNDEFINED_
 			protocol: UNDEFINED_
@@ -65,7 +67,6 @@ class GridFW
 			path: UNDEFINED_
 			# settings
 			s: value: settings
-			settings: value: settings
 			# locals
 			locals: value: locals
 			data: value: locals
@@ -75,10 +76,14 @@ class GridFW
 			[VIEW_CACHE]: UNDEFINED
 			# Routes
 			[ALL_ROUTES]: Object.create null
-			[FIXED_ROUTES]: Object.create null
+			[STATIC_ROUTES]: Object.create null
 			#TODO check if this cache optimise performance for 20 routes
-			[CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
+			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
 			[REGEX_ROUTES]: []
+		# resolve settings based on current mode
+		for v, k in settings
+			if typeof v is 'function'
+				settings[k] = v this, mode
 		# add log support
 		logOptions = level: @s.logLevel
 		LoggerFactory GridFW.prototype, logOptions

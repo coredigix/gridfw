@@ -17,7 +17,7 @@ Object.defineProperties Context.prototype,
 	###
 	json: value: (data)->
 		# stringify data
-		if @app.settings.pretty
+		if @app.s[<?= settings.outPutPretty ?>]
 			data = JSON.stringify data, null, "\t"
 		else
 			data = JSON.stringify data
@@ -30,7 +30,6 @@ Object.defineProperties Context.prototype,
 	 * @param {string | buffer | object} data - data to send
 	###
 	send:		value: (data)-> #TODO support user to specify if he wants JSON, Text, XML, ...
-		settings = @app.settings
 		encoding = @encoding
 		# native request
 		req = @req
@@ -56,7 +55,7 @@ Object.defineProperties Context.prototype,
 		else
 			# ETag
 			unless @hasHeader 'ETag'
-				etag = settings.etag data
+				etag = @s[<?= settings.etagFunction ?>] data
 				@setHeader 'ETag', etag if etag
 			
 			# freshness

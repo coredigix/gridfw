@@ -1,4 +1,4 @@
-var PluginError, cliTable, coffeescript, compileCoffee, compileTest, errorHandler, gulp, gutil, include, lnk, rename, watch;
+var PluginError, cliTable, coffeescript, compileCoffee, compileTemplate, compileTest, errorHandler, gulp, gutil, include, rename, template, watch;
 
 gulp = require('gulp');
 
@@ -15,17 +15,28 @@ PluginError = gulp.PluginError;
 
 cliTable = require('cli-table');
 
-const {symlink} = require('fs');
-const path = require('path')
+template = require('gulp-template'); // compile some consts into digits
+
+
+// compile final values (consts to be remplaced at compile time)
+compileTemplate = function() { // gulp mast be reloaded each time this file is changed!
+  return gulp.src('consts-symbols.coffee').pipe(coffeescript({
+    bare: true
+  }).on('error', errorHandler)).pipe(gulp.dest('.')).on('error', errorHandler);
+};
 
 // handlers
 compileCoffee = function() {
   return gulp.src('assets/**/[!_]*.coffee', {
     nodir: true
+  // include related files
   }).pipe(include({
     hardFail: true
-  })).pipe(coffeescript({
+  // replace final values (compile time processing)
+  // convert to js
+  })).pipe(template(require('./consts-symbols'))).pipe(coffeescript({
     bare: true
+  // save
   }).on('error', errorHandler)).pipe(gulp.dest('build')).on('error', errorHandler);
 };
 
@@ -83,9 +94,4 @@ errorHandler = function(err) {
 };
 
 // default task
-gulp.task('default', gulp.series(compileCoffee, compileTest, watch));
-
-// create sym links
-symlink(path.join(__dirname, 'assets/views'), path.join(__dirname, 'build/views'), 'dir', (err)=>{
-  console.log('----+++--', err)
-});
+gulp.task('default', gulp.series(compileTemplate, compileCoffee, compileTest, watch));

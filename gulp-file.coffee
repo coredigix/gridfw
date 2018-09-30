@@ -6,13 +6,24 @@ rename			= require "gulp-rename"
 coffeescript	= require 'gulp-coffeescript'
 PluginError		= gulp.PluginError
 cliTable		= require 'cli-table'
-lnk				= require 'create-symlink'
+template		= require 'gulp-template' # compile some consts into digits
 
+# compile final values (consts to be remplaced at compile time)
+compileTemplate= -> # gulp mast be reloaded each time this file is changed!
+	gulp.src 'consts-symbols.coffee'
+	.pipe coffeescript(bare: true).on 'error', errorHandler
+	.pipe gulp.dest '.'
+	.on 'error', errorHandler
 # handlers
 compileCoffee = ->
 	gulp.src 'assets/**/[!_]*.coffee', nodir: true
+	# include related files
 	.pipe include hardFail: true
+	# replace final values (compile time processing)
+	.pipe template require './consts-symbols'
+	# convert to js
 	.pipe coffeescript(bare: true).on 'error', errorHandler
+	# save
 	.pipe gulp.dest 'build'
 	.on 'error', errorHandler
 
@@ -58,11 +69,4 @@ errorHandler= (err)->
 	return
 
 # default task
-gulp.task 'default', gulp.series compileCoffee, compileTest, watch
-
-# create sym links
-lnk 'assets/views', 'build/views'
-.then ->
-	console.log 'Symlink created: build/views -> assets/views'
-.catch (err)->
-	console.error 'Fail to create symlink: ', err
+gulp.task 'default', gulp.series compileTemplate, compileCoffee, compileTest, watch
