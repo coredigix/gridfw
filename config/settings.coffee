@@ -1,62 +1,58 @@
-###*
- * App default settings
-###
-DEFAULT_SETTINGS = [
+# App consts
+exports.app = app =
+	DEV: 0
+	PROD: 1
+### this file contains app default settings ###
+exports.settings=
 	####<========================== App Id =============================>####
-	###*
-	 * Author
-	 * @key settings.author
-	###
-	'GridFW'
-	###*
-	 * Admin Email
-	 * @key settings.email
-	###
-	'contact@coredigix.com'
+	###* Author ###
+	author: 'GridFW'
+	###* Admin Email ###
+	email: 'contact@coredigix.com'
 
 	####<========================== LOG =============================>####
 	###*
 	 * log level
 	 * @default prod: 'info', dev: 'debug'
-	 * @key settings.logLevel
 	###
-	'debug'
+	logLevel: 'debug'
 
 	####<========================== Router =============================>####
 	###*
 	 * Route cache
-	 * @key settings.routeCacheMax
 	###
-	50
+	routeCacheMax: 50
 	###*
 	 * Ignore trailing slashes
 	 * 		off	: ignore
 	 * 		0	: ignore, make redirect when someone asks for this URL
 	 * 		on	: 'keep it'
-	 *	@key settings.trailingSlash
 	###
-	0
+	trailingSlash: 0
 
-	####<========================== Render and output =============================>####
+	###*
+	 * when true, ignore path case
+	 * @type {boolean}
+	###
+	routeIgnoreCase: on
+
+	####<========================== Request =============================>####
 	###*
 	 * trust proxy
-	 * @key settings.trustProxyFunction
 	###
-	(app, mode)->
+	trustProxyFunction: (app, mode)->
 		#TODO
 		(req, proxyLevel)-> on
 	####<========================== Render and output =============================>####
 	###*
 	 * Render JSON as pretty
 	 * @default  false when prod mode
-	 * @key settings.outPutPretty
 	###
-	(app, mode)-> mode is <?= app.DEV ?>
+	outPutPretty: (app, mode)-> mode is 0 # true if dev mode
 	###*
 	 * Etag function generator
 	 * generate ETag for responses
-	 * @key settings.etagFunction
 	###
-	(app, mode)->
+	etagFunction: (app, mode)->
 		(data)-> '' 
-]
+

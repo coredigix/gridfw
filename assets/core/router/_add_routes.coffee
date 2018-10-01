@@ -1,12 +1,19 @@
+###
+# Consts
+###
+ROUTE_PARAM_MATCH = /^:[a-z0-9_-]$/i
+
+
+
 ###*
  * Add routes
  * Supported routes
  **** static routes
  * /path/to/static/route
  * /path/containing/*stars/is-supported
- **** to escape "*" and ":" use "*?" and ":?"
- * /wildcard/in/the/last/mast/be/escaped/*?
- * /semi/:?colone/mast/be/escaped:if:after:slash:only
+ **** to escape "*" and ":" use "?*" and "?:"
+ * /wildcard/in/the/last/mast/be/escaped/?*
+ * /semi/?:colone/mast/be/escaped:if:after:slash:only
  **** dynamic path
  * /dynamic/:param1/path/:param2
  * /dynamic/:param/* # the rest of path will be stored inside param called "*"
@@ -87,9 +94,6 @@ Object.defineProperties GridFW.prototype,
  * Create route node or add handlers to other routes
 ###
 _createRouteNode = (app, method, route, nodeAttrs)->
-	# settings
-	settings = app.s
-	# remove stailing
 	# flatten method
 	if Array.isArray method
 		for v in method
@@ -106,11 +110,20 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 		return
 	# check route
 	throw new Error 'route expected string' unless typeof route is 'string'
-	throw new Error "Incorrect route: #{route}" if /^\?|[^:*]\?/.test route
+	# prevent "?" symbol and multiple successive slashes
+	throw new Error "Incorrect route: #{route}" if /^\?|\/\?[^:*]|\/\//.test route
+
+	# settings
+	settings = app.s
+	# remove trailingSlash from route
+	unless settings[<%= settings.trailingSlash %>]
+		route = route.slice 0, -1 if route.endsWith '/'
+	# route mast starts width "/"
+	route = '/' + route unless route.startsWith '/'
 	# check if it is a static or dynamic route
-	isDynamic = /\/:[^?]|*$/.test route
+	isDynamic = /\/:|*$/.test route
 	# route key
-	routeKey = if isDynamic then route.replace(/([:*])/g, '$1?') else route.replace /([:*])\?/g, '$1'
+	routeKey = if isDynamic then route.replace(/([:*])/g, '?$1') else route.replace /\/\?([:*])/g, '$1'
 	# get some already created node if exists
 	allRoutes = app[ALL_ROUTES]
 	routeMapper = allRoutes[routeKey]
@@ -123,11 +136,16 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 				routeMapper= allRoutes[routeKey] = new RouteMapper app, route
 			# add handlers to route
 			routeMapper.append method, nodeAttrs
+			# map dynamic route
+			app.debug 'ROUTER', 'Add dynamic route: ', method, route
+			_linkDynamicRoute app, route, routeMapper
 		# else add handler to any route or future route that matches
 		else
 			@_registerRouteHandlers app, route, nodeAttrs
 	# if static route, create node even no controller is specified
 	else
+		# convert route to lowercase unless case sensitive
+		route = route.toLowerCase() unless settings[<%= settings.routeIgnoreCase %>]
 		# create route mapper if not exists
 		unless routeMapper
 			routeMapper= allRoutes[routeKey] = new RouteMapper app, route
@@ -135,7 +153,32 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 		routeMapper.append method, nodeAttrs
 		# map as static route if has controller
 		if nodeAttrs.c
-			app[STATIC_ROUTES][route] = routeMapper
+			app.debug 'ROUTER', 'Add static route: ', method, routeKey
+			app[STATIC_ROUTES][routeKey] = routeMapper
 	# ends
+	return
+
+
+###*
+ * link dynamic route
+###
+_linkDynamicRoute = (app, route, routeMapper)->
+	# if convert static parts to lower case
+	convLowerCase = app.s[<%= settings.routeIgnoreCase %>]
+	# exec
+	currentNode = app[DYNAMIC_ROUTES]
+	for part in route.split /(?=\/)/
+		# if param
+		if part.startsWith '/:'
+			part = part.substr 2
+			# check param is correct
+			throw new Error 'Could not use "__proto__" as param name' if part is '__proto__'
+			throw new Error "Params mast matches [a-zA-Z0-9_-]. Illegal param: [#{part}] at route: #{route}" unless ROUTE_PARAM_MATCH.test part
+			# var
+			currentNode = currentNode.$[part] ?= Object.create null
+		# if static part
+		else
+			part = part.toLowerCase() if convLowerCase
+			currentNode = currentNode[part] ?= Object.create null
 	return
 

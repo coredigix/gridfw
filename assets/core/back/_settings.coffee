@@ -26,7 +26,7 @@ DEFAULT_SETTINGS=
 	 * 		0	: ignore, make redirect when someone ask this URL
 	 * 		on	: 'keep it'
 	###
-	trailingSlash: 0
+	# trailingSlash: 0
 	###*
 	 * when true, ignore path case
 	 * @type {boolean}

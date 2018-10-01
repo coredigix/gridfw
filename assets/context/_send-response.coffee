@@ -17,7 +17,7 @@ Object.defineProperties Context.prototype,
 	###
 	json: value: (data)->
 		# stringify data
-		if @app.s[<?= settings.outPutPretty ?>]
+		if @app.s[<%= settings.outPutPretty %>]
 			data = JSON.stringify data, null, "\t"
 		else
 			data = JSON.stringify data
@@ -55,7 +55,7 @@ Object.defineProperties Context.prototype,
 		else
 			# ETag
 			unless @hasHeader 'ETag'
-				etag = @s[<?= settings.etagFunction ?>] data
+				etag = @s[<%= settings.etagFunction %>] data
 				@setHeader 'ETag', etag if etag
 			
 			# freshness

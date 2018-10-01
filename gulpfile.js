@@ -1,4 +1,4 @@
-var PluginError, cliTable, coffeescript, compileCoffee, compileTemplate, compileTest, errorHandler, gulp, gutil, include, rename, template, watch;
+var PluginError, cliTable, coffeescript, compileCoffee, compileConfig, compileTest, errorHandler, execConfig, gulp, gutil, include, rename, template, watch;
 
 gulp = require('gulp');
 
@@ -19,10 +19,15 @@ template = require('gulp-template'); // compile some consts into digits
 
 
 // compile final values (consts to be remplaced at compile time)
-compileTemplate = function() { // gulp mast be reloaded each time this file is changed!
-  return gulp.src('consts-symbols.coffee').pipe(coffeescript({
+compileConfig = function() { // gulp mast be reloaded each time this file is changed!
+  return gulp.src('config/*.coffee').pipe(coffeescript({
     bare: true
-  }).on('error', errorHandler)).pipe(gulp.dest('.')).on('error', errorHandler);
+  }).on('error', errorHandler)).pipe(gulp.dest('config/build/')).on('error', errorHandler);
+};
+
+execConfig = function() {
+  require('./config/build/build');
+  return gulp.src('config/build/config.js').pipe(gulp.dest('build/core/'));
 };
 
 // handlers
@@ -34,7 +39,7 @@ compileCoffee = function() {
     hardFail: true
   // replace final values (compile time processing)
   // convert to js
-  })).pipe(template(require('./consts-symbols'))).pipe(coffeescript({
+  })).pipe(template(require('./config/build/settings'))).pipe(coffeescript({
     bare: true
   // save
   }).on('error', errorHandler)).pipe(gulp.dest('build')).on('error', errorHandler);
@@ -94,4 +99,4 @@ errorHandler = function(err) {
 };
 
 // default task
-gulp.task('default', gulp.series(compileTemplate, compileCoffee, compileTest, watch));
+gulp.task('default', gulp.series(compileConfig, execConfig, compileCoffee, compileTest, watch));

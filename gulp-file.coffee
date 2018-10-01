@@ -9,18 +9,22 @@ cliTable		= require 'cli-table'
 template		= require 'gulp-template' # compile some consts into digits
 
 # compile final values (consts to be remplaced at compile time)
-compileTemplate= -> # gulp mast be reloaded each time this file is changed!
-	gulp.src 'consts-symbols.coffee'
+compileConfig= -> # gulp mast be reloaded each time this file is changed!
+	gulp.src 'config/*.coffee'
 	.pipe coffeescript(bare: true).on 'error', errorHandler
-	.pipe gulp.dest '.'
+	.pipe gulp.dest 'config/build/'
 	.on 'error', errorHandler
+execConfig= ->
+	require './config/build/build'
+	gulp.src 'config/build/config.js'
+	.pipe gulp.dest 'build/core/'
 # handlers
 compileCoffee = ->
 	gulp.src 'assets/**/[!_]*.coffee', nodir: true
 	# include related files
 	.pipe include hardFail: true
 	# replace final values (compile time processing)
-	.pipe template require './consts-symbols'
+	.pipe template require './config/build/settings'
 	# convert to js
 	.pipe coffeescript(bare: true).on 'error', errorHandler
 	# save
@@ -69,4 +73,4 @@ errorHandler= (err)->
 	return
 
 # default task
-gulp.task 'default', gulp.series compileTemplate, compileCoffee, compileTest, watch
+gulp.task 'default', gulp.series compileConfig, execConfig, compileCoffee, compileTest, watch

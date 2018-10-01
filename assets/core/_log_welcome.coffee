@@ -18,7 +18,7 @@ _console_welcome = (app) ->
 	\t✔︎ Port: #{app.port}
 	\t✔︎ Path: #{app.path}
 	\t✔︎ Host: #{app.host}
-	\t✔︎ Autor: #{app.s[<?=settings.author ?>]}
-	\t✔︎ Admin Email: #{app.s[<?=settings.email ?>]}
+	\t✔︎ Autor: #{app.s[<%=settings.author %>]}
+	\t✔︎ Admin Email: #{app.s[<%=settings.email %>]}
 	"""
 	console.log "└─────────────────────────────────────────────────────────────────────────────────────────┘\e[0m"
