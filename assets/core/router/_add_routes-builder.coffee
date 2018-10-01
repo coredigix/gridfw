@@ -14,7 +14,9 @@ class _RouteBuiler
 			parent: value: parent
 			m: UNDEFINED # middlewares
 			f: UNDEFINED # filters
-			c: UNDEFINED # controller
+			c: # controller
+				value: undefined
+				writable: true
 			p: UNDEFINED # post process
 			e: UNDEFINED # error handler
 			$: value: {} # param handlers
@@ -152,7 +154,5 @@ class _RouteBuiler
 		throw new Error 'resolver expect function' unless typeof resolver is 'function'
 
 		throw new Error "Param name [#{name}] already set" if @$[name]
-		@$[name] =
-			x: regex
-			r: resolver
+		@$[name] = [regex, resolver]
 Object.defineProperty _RouteBuiler, 'end', get: -> do @build

@@ -1,10 +1,3 @@
-###
-# Consts
-###
-ROUTE_PARAM_MATCH = /^:[a-z0-9_-]$/i
-
-
-
 ###*
  * Add routes
  * Supported routes
@@ -25,6 +18,7 @@ Object.defineProperties GridFW.prototype,
 	 * @example
 	 * Route.on('GET', '/path/to/resource', handler)
 	 * .on(['GET', 'HEAD'], ['/path/to/resource', '/path2/to/src'], handler)
+	 * .on(['GET', 'HEAD'], ['/path/to/resource', '/path2/to/src'], {m:middleware, p:postProcess, ...})
 	 * .on('GET', '/path/to/resource')
 	 * 		.then(handler)
 	 * 		.end # go back to route
@@ -57,9 +51,13 @@ Object.defineProperties GridFW.prototype,
 		switch arguments.length
 			# .on 'GET', '/route', handler
 			when 3
-				throw new Error 'handler expected function' unless typeof handler is 'function'
-				throw new Error 'handler could take only one argument' if handler.length > 1
-				_createRouteNode this, method, route, c: handler
+				if typeof handler is 'function'
+					throw new Error 'handler could take only one argument' if handler.length > 1
+					_createRouteNode this, method, route, c: handler
+				else if typeof handler is 'object'
+					_createRouteNode this, method, route, handler
+				else
+					throw new Error 'Illegal handler'
 				# chain
 				this
 			# .on 'GET', '/route'

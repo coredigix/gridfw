@@ -18,10 +18,13 @@ class RouteMapper
 			throw new Error "A controller already set to this route: #{method} #{@route}" if attrs.c and routeNode.c
 		else
 			routeNode = @[method] = new RouteNode @app, this
+		# add controler
+		if attrs.c
+			routeNode.c = attrs.c
 		# add handlers
 		for k, v of attrs
 			if typeof v is 'function'
-				routeNode[k] = v
+				routeNode[k].push v
 			else if Array.isArray v
 				ref= routeNode[k]
 				# append handlers

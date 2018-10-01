@@ -38,6 +38,15 @@ CACHED_ROUTES	= Symbol 'Cached_routes'
 
 # consts
 HTTP_METHODS = http.METHODS
+HTTP_SUPPORTED_METHODS= [
+	'all' # all methods
+	'get'
+	'head'
+	'post'
+	'put'
+	'patch'
+	'delete'
+]
 
 class GridFW
 	###*
@@ -73,8 +82,9 @@ class GridFW
 			# locals
 			locals: value: locals
 			data: value: locals
-			# param handlers
-			$: value: Object.create null
+			# handlers
+			m: value: [] # middlewares
+			$: value: Object.create null # params
 			# view cache
 			[VIEW_CACHE]: UNDEFINED
 			# Routes
