@@ -13,10 +13,11 @@ UNDEFINED =
 	configurable: true
 
 class RouteNode
-	constructor: (app, routeObj)->
+	constructor: (app, routeObj, method)->
 		Object.defineProperties this,
 			app: value: app
 			route: value: routeObj
+			method: value: method
 			# settings
 			s: value: app.s
 			# middlewares (list of or undefined)
@@ -30,4 +31,6 @@ class RouteNode
 			# Error handlers (undefined or list of handlers)
 			e: UNDEFINED
 			# path and query params (object)
-			$: value: Object.create app.$
+			$: value: Object.create app.m.$
+	toString: ->
+		"RouteNode: #{@method} #{@route.route}"

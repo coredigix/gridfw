@@ -1,7 +1,4 @@
 
-# default used protocol when non specified, in [http, https, http2]
-DEFAULT_PROTOCOL = 'http'
-
 ###*
  * Listen([port], options)
  * @optional @param {number} options.port - listening port @default to arbitrary generated one

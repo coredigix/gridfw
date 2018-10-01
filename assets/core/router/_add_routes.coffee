@@ -144,6 +144,8 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 	else
 		# convert route to lowercase unless case sensitive
 		route = route.toLowerCase() unless settings[<%= settings.routeIgnoreCase %>]
+		# encode URL
+		route = encodeurl route
 		# create route mapper if not exists
 		unless routeMapper
 			routeMapper= allRoutes[routeKey] = new RouteMapper app, route
@@ -160,15 +162,21 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 ###*
  * link dynamic route
 ###
+_linkDynamicRouteParamSet = new Set() # reuse this for performance purpose
 _linkDynamicRoute = (app, route, routeMapper)->
 	# if convert static parts to lower case
 	convLowerCase = app.s[<%= settings.routeIgnoreCase %>]
+	# check param names are not duplicated
+	_linkDynamicRouteParamSet.clear()
 	# exec
 	currentNode = app[DYNAMIC_ROUTES]
 	for part in route.split /(?=\/)/
 		# if param
 		if part.startsWith '/:'
 			part = part.substr 2
+			# uniqueness of param name
+			throw new Error "Dupplicated param name: #{part}" if _linkDynamicRouteParamSet.has part
+			_linkDynamicRouteParamSet.add part
 			# check param is correct
 			throw new Error 'Could not use "__proto__" as param name' if part is '__proto__'
 			throw new Error "Params mast matches [a-zA-Z0-9_-]. Illegal param: [#{part}] at route: #{route}" unless ROUTE_PARAM_MATCH.test part

@@ -1,7 +1,7 @@
 
 
 
-Object.defineProperties Context.prototype,
+Object.defineProperties GridFW.prototype,
 	###*
 	 * parse query
 	 * enable user to define an other query parser,
@@ -9,14 +9,12 @@ Object.defineProperties Context.prototype,
 	 * @param {string} rawQuery - query to parse
 	 * @return {Object} Map of all params
 	 * @example
-	 * ctx.QueryParser('param=value&param2=value2')
+	 * ctx.QueryParser({}, 'param=value&param2=value2')
 	###
 	queryParser: value: (rawQuery)->
-		query = {}
-		raw = @rawQuery
-		if raw
-			raw = raw.split '&'
-			for part in raw
+		targetObj = Object.create null
+		if rawQuery
+			for part in rawQuery.split '&'
 				# parse
 				idx = part.indexOf '='
 				if idx isnt -1
@@ -28,14 +26,14 @@ Object.defineProperties Context.prototype,
 				# fix __proto__
 				if name is '__proto__'
 					@warn 'query-parser', 'Received param with illegal name: __proto__'
-					name = '__proto'
+					name = '&__proto__'
 				# append to object
-				alreadyValue = query[name]
+				alreadyValue = targetObj[name]
 				if alreadyValue is undefined
-					query[name] = value
+					targetObj[name] = value
 				else if typeof alreadyValue is 'string'
-					query[name] = [alreadyValue, value]
+					targetObj[name] = [alreadyValue, value]
 				else
 					alreadyValue.push value
 		# return
-		query
+		targetObj

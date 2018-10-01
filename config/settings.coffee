@@ -31,7 +31,9 @@ exports.settings=
 	trailingSlash: 0
 
 	###*
-	 * when true, ignore path case
+	 * when 1, ignore path case
+	 * when on, ignore route static part case only (do not lowercase param values)
+	 * when off, case sensitive
 	 * @type {boolean}
 	###
 	routeIgnoreCase: on
@@ -45,14 +47,39 @@ exports.settings=
 		(req, proxyLevel)-> on
 	####<========================== Render and output =============================>####
 	###*
-	 * Render JSON as pretty
+	 * Render pretty JSON, XML and HTML
 	 * @default  false when prod mode
 	###
-	outPutPretty: (app, mode)-> mode is 0 # true if dev mode
+	pretty: (app, mode)-> mode is 0 # true if dev mode
 	###*
 	 * Etag function generator
 	 * generate ETag for responses
 	###
 	etagFunction: (app, mode)->
 		(data)-> '' 
+	###*
+	 * render templates
+	###
+	engines:
+		'.pug': require 'pug'
+	###*
+	 * view Cache
+	 * @when off: disable cache
+	 * @when on: enable cache for ever
+	 * @type {boolean}
+	###
+	viewCache: (app, mode) ->
+		mode isnt 0 # false if dev mode
+	viewCacheMax: 50 # view cache max entries
+	views: [
+		'views' # default folder
+	]
+	####<========================== Errors =============================>####
+	# Error templates
+	errorTemplates: ->
+		'404': path.join __dirname, '../../build/views/errors/404'
+		'500': path.join __dirname, '../../build/views/errors/500'
+		# dev mode
+		'd404': path.join __dirname, '../../build/views/errors/d404'
+		'd500': path.join __dirname, '../../build/views/errors/d500'
 

@@ -4,7 +4,7 @@
 Object.defineProperties GridFW.prototype,
 	### add middleware ###
 	use: value: (route, middleware)->
-		[route, middleware] = ['/', route] if arguments.length is 1
+		[route, middleware] = ['/*', route] if arguments.length is 1
 		# add middleware
 		@all route, m: middleware
 	###*
@@ -14,7 +14,7 @@ Object.defineProperties GridFW.prototype,
 	###
 	param: value: (route, paramName, regex, resolver)->
 		if arguments.length is 3
-			[route, paramName, regex, resolver] = ['/', route, paramName, regex]
+			[route, paramName, regex, resolver] = ['/*', route, paramName, regex]
 		else unless arguments.length is 4
 			throw new Error 'Illegal arguments'
 		@all route, $: [paramName]: [regex, resolver]
@@ -24,13 +24,13 @@ Object.defineProperties GridFW.prototype,
 	 * app.filter('/route', filterFx(ctx){})
 	###
 	filter: value: (route, handler)->
-		[route, middleware] = ['/', route] if arguments.length is 1
+		[route, middleware] = ['/*', route] if arguments.length is 1
 		@all route, f: handler
 	###*
 	 * Post process
 	###
 	finally: value: (route, handler)->
-		[route, middleware] = ['/', route] if arguments.length is 1
+		[route, middleware] = ['/*', route] if arguments.length is 1
 		@all route, p: handler
 	###*
 	 * Error handler
@@ -38,7 +38,7 @@ Object.defineProperties GridFW.prototype,
 	 * app.catch('/path', handler)
 	###
 	catch: value: (route, handler)->
-		[route, middleware] = ['/', route] if arguments.length is 1
+		[route, middleware] = ['/*', route] if arguments.length is 1
 		@all route, e: handler
 
 ###*

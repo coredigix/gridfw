@@ -17,25 +17,25 @@ GridFW::render= (templatePath, locals)->
  * @return {Promise<html>}          return compiled HTML
 ###
 GridFW::_render = (templatePath, locals)->
-	settings = @settings
-	useCache = settings.viewCache
+	settings = @s
+	viewCache = @[VIEW_CACHE]
 	# resolve file content
 	throw new Error 'path expected string' unless typeof templatePath is 'string'
 	# check in cache
-	renderFx	= useCache && @[VIEW_CACHE].get templatePath
+	renderFx	= viewCache?.get templatePath
 	unless renderFx 
 		# if add index
 		filePath = if templatePath.endsWith '/' then templatePath += 'index' else templatePath 
 			
 		# get file string
-		engines = settings.engines
+		engines = settings[<%= settings.engines %>]
 		# absolute path
 		if path.isAbsolute filePath
-			template = _loadTemplateFileContent settings.engines, filePath
+			template = _loadTemplateFileContent engines, filePath
 		# relative to views
 		else
-			for v in settings.views
-				template = _loadTemplateFileContent settings.engines, (path.join v, filePath)
+			for v in settings[<%= settings.views %>]
+				template = _loadTemplateFileContent engines, (path.join v, filePath)
 				if template.content?
 					break
 		unless template.content?
@@ -43,10 +43,9 @@ GridFW::_render = (templatePath, locals)->
 
 		# compile template
 		renderFx = template.module.compile template.content,
-			pretty: settings.renderPretty
+			pretty: settings[<%= settings.pretty %>]
 		# cache
-		if useCache
-			@[VIEW_CACHE].set templatePath, renderFx
+		viewCache?.set templatePath, renderFx
 	# compile render fx
 	renderFx locals
 
@@ -60,12 +59,10 @@ _loadTemplateFileContent= (engines, filePath) ->
 		module: null
 	for ext, module of engines
 		try
-			console.log '--- read file: ', if filePath.endsWith ext then filePath else filePath + ext
 			result.content	= await fs.readFile if filePath.endsWith ext then filePath else filePath + ext
 			result.module	= module
 			break
 		catch err
-			console.log 'error Code: ', err
 			if err and err.code is 'ENOENT'
 				# file not found, go to next file
 			else

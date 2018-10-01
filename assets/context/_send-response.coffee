@@ -17,7 +17,7 @@ Object.defineProperties Context.prototype,
 	###
 	json: value: (data)->
 		# stringify data
-		if @app.s[<%= settings.outPutPretty %>]
+		if @app.s[<%= settings.pretty %>]
 			data = JSON.stringify data, null, "\t"
 		else
 			data = JSON.stringify data

@@ -95,7 +95,6 @@ class Context extends http.ServerResponse
 # promisify native functions
 # Object.defineProperties 
 
-#=include _context-param-resolvers.coffee
 #=include _send-response.coffee
 #=include _context-content-types.coffee
 #=include _context-cookies.coffee
