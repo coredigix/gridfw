@@ -16,7 +16,9 @@ fastDecode	= require 'fast-decode-uri-component'
 encodeurl	= require 'encodeurl'
 
 # default config
-DEFAULT_SETTINGS = require './config'
+cfg = require './config'
+DEFAULT_SETTINGS = cfg.config
+DEFAULT_SETTINGS_KIES= cfg.kies
 
 # 
 APP_MODES = [
@@ -64,7 +66,12 @@ class GridFW
 	 * @return {[type]}         [description]
 	###
 	constructor: (options)->
-		# 
+		# load options from file path
+		unless options
+			options = Object.create null
+		else if typeof options is 'string'
+			options = require options
+		# check
 		throw new Error "Illegal mode: #{options.mode}, please use: dev or prod" if options.mode and options.mode not in ['dev', 'prod']
 		throw new Error 'options.routeCache expected number' if options.routeCache and not Number.isSafeInteger options.routeCache
 		# mode
@@ -91,12 +98,14 @@ class GridFW
 			data: value: locals
 			# root RouteMapper
 			m: value: new RouteMapper this, '/'
+			# global param resolvers
+			$: value: Object.create null
 			# view cache
 			[VIEW_CACHE]: UNDEFINED
 			# Routes
-			[ALL_ROUTES]: Object.create null
-			[STATIC_ROUTES]: Object.create null
-			[DYNAMIC_ROUTES]: Object.create null
+			[ALL_ROUTES]: value: Object.create null
+			[STATIC_ROUTES]: value: Object.create null
+			[DYNAMIC_ROUTES]: value: Object.create null
 			#TODO check if this cache optimise performance for 20 routes
 			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
 		# resolve settings based on current mode
@@ -109,7 +118,7 @@ class GridFW
 		LoggerFactory Context.prototype, logOptions
 		# if use view cache
 		if settings[<%= settings.viewCache %>]
-			app[VIEW_CACHE] = new LRUCache
+			@[VIEW_CACHE] = new LRUCache
 				max: settings[<%= settings.viewCacheMax %>]
 
 

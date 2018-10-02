@@ -17,7 +17,7 @@ settings = data.settings;
 
 for (k in settings) {
   v = settings[k];
-  settings[k] = i;
+  settings[k] = i++;
   appSettings.push(v);
 }
 
@@ -26,6 +26,7 @@ fnts = [];
 
 i = 0;
 
+// stringify
 appSettings = JSON.stringify(appSettings, function(k, v) {
   if (typeof v === 'function') {
     fnts.push(v);
@@ -35,9 +36,12 @@ appSettings = JSON.stringify(appSettings, function(k, v) {
   return v;
 });
 
-appSettings = 'module.exports=' + appSettings.replace(/"__fx(\d+)__"/g, function(_, i) {
+// replace with function expression
+appSettings = appSettings.replace(/"__fx(\d+)__"/g, function(_, i) {
   return fnts[i].toString();
 });
+
+appSettings = `const path = require('path');\nmodule.exports.config= ${appSettings}\nmodule.exports.kies= ${JSON.stringify(settings)}`;
 
 // save
 fs.writeFileSync(path.join(__dirname, 'config.js'), appSettings);

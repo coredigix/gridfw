@@ -119,7 +119,7 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 	# route mast starts width "/"
 	route = '/' + route unless route.startsWith '/'
 	# check if it is a static or dynamic route
-	isDynamic = /\/:|*$/.test route
+	isDynamic = /\/:|\*$/.test route
 	# route key
 	routeKey = if isDynamic then route.replace(/([:*])/g, '?$1') else route.replace /\/\?([:*])/g, '$1'
 	# get some already created node if exists

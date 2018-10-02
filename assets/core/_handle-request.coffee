@@ -19,6 +19,23 @@ Object.defineProperties GridFW.prototype,
 			else
 				rawPath = url.substr 0, i
 				rawUrlQuery = url.substr i + 1
+			# basic ctx attributes
+			Object.defineProperties ctx,
+				app: value: this
+				s: value: settings
+				req: value: req
+				res: value: ctx
+				# url
+				method: value: method
+				url: value: req.url
+				# locals
+				locals: value: Object.create @locals,
+					ctx: value: ctx
+			# add to request
+			Object.defineProperties req,
+				res: value: ctx
+				ctx: value: ctx
+				req: value: req
 			# trailing slash
 			unless rawPath is '/'
 				ref= settings[<%= settings.trailingSlash %>]
@@ -29,7 +46,7 @@ Object.defineProperties GridFW.prototype,
 						rawPath = rawPath.concat '?', rawUrlQuery if rawUrlQuery
 						ctx.permanentRedirect rawPath
 						return
-				else of ref is off
+				else if ref is off
 					rawPath = rawPath.slice 0, -1 if rawPath.endsWith '/'
 			# get route mapper
 			routeDescriptor = _resolveRoute this, method, rawPath
@@ -42,26 +59,13 @@ Object.defineProperties GridFW.prototype,
 			queryParams = Object.create rawUrlQuery
 			# add context attributes
 			Object.defineProperties ctx,
-				app: value: this
-				req: value: req
-				res: value: ctx
 				# url
-				method: value: method
-				url: value: req.url
 				path: value: rawPath
 				rawQuery: value: rawUrlQuery
 				query: value: queryParams
-				# locals
-				locals: value: Object.create @locals,
-					ctx: value: ctx
 				# params
 				rawParams: value: rawParams
 				params: value: params
-			# add to request
-			Object.defineProperties req,
-				res: value: ctx
-				ctx: value: ctx
-				req: value: req
 			# resolve params
 			if rawParams and routeParamResolvers
 				for k, v of rawParams
@@ -94,6 +98,7 @@ Object.defineProperties GridFW.prototype,
 				for handler in routeNode.p
 					await handler ctx
 		catch err
+			console.log '----- ', ctx.url
 			# excute user defined error handlers
 			if routeNode?.e
 				for handler in routeNode.e
@@ -104,6 +109,7 @@ Object.defineProperties GridFW.prototype,
 					catch e
 						err = e
 			if err
+				console.log '****'
 				await _uncaughtRequestErrorHandler err, ctx, this
 				.catch (err)-> @fatalError 'HANDLE-REQUEST', err
 		finally

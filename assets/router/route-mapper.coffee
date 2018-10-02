@@ -17,15 +17,16 @@ class RouteMapper
 			throw new Error "A controller already set to this route: #{method} #{@route}" if attrs.c and routeNode.c
 		else
 			routeNode = @[method] = new RouteNode @app, this, method
-		# add controler
-		if attrs.c
-			throw new Error 'The controller expected function' unless typeof attrs.c is 'function'
-			throw new Error 'The controller expect exactly one argument' if attrs.c.length > 1
-			routeNode.c = attrs.c
+	
 		# add handlers
 		for k, v of attrs
-			if typeof v is 'function'
-				routeNode[k].push v
+			# add controler
+			if k is 'c'
+				throw new Error 'The controller expected function' unless typeof v is 'function'
+				throw new Error 'The controller expect exactly one argument' if v.length > 1
+				routeNode.c = v
+			else if typeof v is 'function'
+				(routeNode[k] ?= []).push v
 			else if Array.isArray v
 				# check is array of functions
 				for a in v
@@ -39,15 +40,18 @@ class RouteMapper
 				# add the whole array
 				else
 					routeNode[k] = v
+			else if k is '$'
+				continue
 			else
 				throw new Error "Illegal node attribute: #{k}"
 		# param resolvers
-		ref = routeNode.$
-		for k,v of nodeAttrs.$
-			throw new Error "Param [#{k}] already set to route #{method} #{@route}" if ref[k]
-			unless Array.isArray(v) and v.length is 2 and (v[0] instanceof RegExp) and (typeof v[1] is 'function')
-				throw new Error "Illegal param format"
-			ref[k] = v
+		if attrs.$
+			ref = if @route is '/' then @app.$ else routeNode.$
+			for k,v of attrs.$
+				throw new Error "Param [#{k}] already set to route #{method} #{@route}" if ref[k]
+				unless Array.isArray(v) and v.length is 2 and (v[0] instanceof RegExp) and (typeof v[1] is 'function')
+					throw new Error "Illegal param format"
+				ref[k] = v
 		# chain
 		this
 

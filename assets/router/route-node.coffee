@@ -31,6 +31,8 @@ class RouteNode
 			# Error handlers (undefined or list of handlers)
 			e: UNDEFINED
 			# path and query params (object)
-			$: value: Object.create app.m.$
+			$: value: Object.create app.$
 	toString: ->
 		"RouteNode: #{@method} #{@route.route}"
+
+module.exports= RouteNode

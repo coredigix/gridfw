@@ -19,9 +19,10 @@ class _RouteBuiler
 				writable: true
 			p: UNDEFINED # post process
 			e: UNDEFINED # error handler
-			$: value: {} # param handlers
+			$: value: Object.create null # param handlers
 			# set timeout to build
-			_build = setImmediate => do @build
+			_build: value: setImmediate => do @build
+		return
 
 	###*
 	 * build handlers

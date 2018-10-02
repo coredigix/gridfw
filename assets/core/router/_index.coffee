@@ -1,6 +1,9 @@
 ###*
  * Router
 ###
+#TODO
+# - get routeNode
+# - remove node param
 do ->
 	ROUTE_PARAM_MATCH = /^:[a-z0-9_-]$/i
 

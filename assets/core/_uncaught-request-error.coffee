@@ -27,5 +27,5 @@ _uncaughtRequestErrorHandler = (err, ctx, app)->
 		# render
 		ctx.statusCode = err.code unless ctx.headersSent
 		errorTemplates = settings[<%= settings.errorTemplates %>]
-		ctx.send errorTemplates[errorKey] || errorTemplates[defErrKey], ctx
+		await ctx.send errorTemplates[errorKey] || errorTemplates[defErrKey], ctx
 	return

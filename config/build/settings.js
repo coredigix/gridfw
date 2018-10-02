@@ -31,6 +31,13 @@ exports.settings = {
    * 		on	: 'keep it'
    */
   trailingSlash: 0,
+  /**
+   * when 1, ignore path case
+   * when on, ignore route static part case only (do not lowercase param values)
+   * when off, case sensitive
+   * @type {boolean}
+   */
+  routeIgnoreCase: true,
   //###<========================== Request =============================>####
   /**
    * trust proxy
@@ -43,10 +50,10 @@ exports.settings = {
   },
   //###<========================== Render and output =============================>####
   /**
-   * Render JSON as pretty
+   * Render pretty JSON, XML and HTML
    * @default  false when prod mode
    */
-  outPutPretty: function(app, mode) {
+  pretty: function(app, mode) {
     return mode === 0; // true if dev mode
   },
   /**
@@ -56,6 +63,34 @@ exports.settings = {
   etagFunction: function(app, mode) {
     return function(data) {
       return '';
+    };
+  },
+  /**
+   * render templates
+   */
+  engines: {
+    '.pug': require('pug')
+  },
+  /**
+   * view Cache
+   * @when off: disable cache
+   * @when on: enable cache for ever
+   * @type {boolean}
+   */
+  viewCache: function(app, mode) {
+    return mode !== 0; // false if dev mode
+  },
+  viewCacheMax: 50, // view cache max entries
+  views: ['views'], // default folder
+  //###<========================== Errors =============================>####
+  // Error templates
+  errorTemplates: function() {
+    return {
+      '404': path.join(__dirname, '../../build/views/errors/404'),
+      '500': path.join(__dirname, '../../build/views/errors/500'),
+      // dev mode
+      'd404': path.join(__dirname, '../../build/views/errors/d404'),
+      'd500': path.join(__dirname, '../../build/views/errors/d500')
     };
   }
 };
