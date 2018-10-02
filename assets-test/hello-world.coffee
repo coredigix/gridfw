@@ -17,6 +17,10 @@ app.get '/hello/world', (ctx)->
 	ctx.info 'My service', "---- got #{ctx.path}"
 	ctx.send 'hello dear'
 
+app.get '/hello world', (ctx)->
+	ctx.info 'My service', "---- got #{ctx.path}"
+	ctx.send 'hi'
+
 
 # run the server at port 3000
 app.listen 3000

@@ -20,11 +20,6 @@ cfg = require './config'
 DEFAULT_SETTINGS = cfg.config
 DEFAULT_SETTINGS_KIES= cfg.kies
 
-# 
-APP_MODES = [
-	'DEV' # developpement
-	'PROD' # production
-]
 
 # create empty attribute for performance
 UNDEFINED=
@@ -75,7 +70,7 @@ class GridFW
 		throw new Error "Illegal mode: #{options.mode}, please use: dev or prod" if options.mode and options.mode not in ['dev', 'prod']
 		throw new Error 'options.routeCache expected number' if options.routeCache and not Number.isSafeInteger options.routeCache
 		# mode
-		mode = if options.mode is 'prod' then <%= app.DEV %> else <%= app.PROD %>
+		mode = DEFAULT_SETTINGS_KIES[options.mode] || <%= app.DEV %>
 		# locals
 		locals = Object.create null,
 			app: value: this
@@ -126,6 +121,8 @@ class GridFW
 Object.defineProperties GridFW.prototype,
 	### if the server is listening ###
 	listening: get: -> @server?.listening || false
+	DEV_MODE: value: <%= app.DEV %>
+	PROD_MODE: value: <%= app.PROD %>
 
 #=include _errors.coffee
 #=include _log_welcome.coffee
@@ -134,6 +131,7 @@ Object.defineProperties GridFW.prototype,
 #=include _uncaught-request-error.coffee
 #=include _render.coffee
 #=include _listen.coffee
+#=include _query-parser.coffee
 
 # exports
 module.exports = GridFW

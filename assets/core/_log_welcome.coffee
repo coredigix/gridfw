@@ -5,20 +5,19 @@ if require.main is module
 
 # print console welcome message
 _console_welcome = (app) ->
-	console.log "\e[94m┌─────────────────────────────────────────────────────────────────────────────────────────┐"
+	console.log "\x1b[36m┌─────────────────────────────────────────────────────────────────────────────────────────┐\x1b[0m"
 	# if dev mode or procution
-	if app.mode is 'prod'
-		console.warn "GridFW>> ✔ Production Mode"
+	if app.mode is <%= app.PROD %>
+		console.log "\tGridFW>> ✔ Production Mode"
 	else
-		console.warn "\e[93GridFW>> Developpement Mode\n\t⚠ Do not forget to enable production mode to boost performance\e[0m\e[94m"
+		console.log "\t\x1b[33mGridFW>> Developpement Mode\n\t[!] Do not forget to enable production mode to boost performance\x1b[0m"
+	# running
+	console.log "\tGridFW>> Server listening At: #{app.protocol}://#{app.host}:#{app.port}#{app.path}"
 	# server params
 	console.log """
-	GridFW>> Running The server As:
-	\t✔︎ Name: #{app.name}
-	\t✔︎ Port: #{app.port}
-	\t✔︎ Path: #{app.path}
-	\t✔︎ Host: #{app.host}
-	\t✔︎ Autor: #{app.s[<%=settings.author %>]}
-	\t✔︎ Admin Email: #{app.s[<%=settings.email %>]}
+	\tGridFW>> Running As:
+	\t\t✔︎ Name:\t #{app.s[<%=settings.name %>]}
+	\t\t✔︎ Autor:\t #{app.s[<%=settings.author %>]}
+	\t\t✔︎ Admin Email:\t #{app.s[<%=settings.email %>]}
 	"""
-	console.log "└─────────────────────────────────────────────────────────────────────────────────────────┘\e[0m"
+	console.log "\x1b[36m└─────────────────────────────────────────────────────────────────────────────────────────┘\x1b[0m"

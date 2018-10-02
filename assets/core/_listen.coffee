@@ -47,7 +47,9 @@ GridFW::listen= (options)->
 						host	: value: options.host || 'localhost'
 						path	: value: options.path || '/'
 						protocol: value: protocol
-					# info
+					# print welcome message
+					_console_welcome this
+					# log
 					@info 'CORE', "Server listening At: #{@protocol}://#{@host}:#{@port}#{@path}"
 					# resolve
 					res this

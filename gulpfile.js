@@ -1,4 +1,4 @@
-var PluginError, cliTable, coffeescript, compileCoffee, compileConfig, compileTest, errorHandler, execConfig, gulp, gutil, include, rename, template, watch;
+var PluginError, cliTable, coffeescript, compileCoffee, compileConfig, compileTest, copyViews, errorHandler, execConfig, gulp, gutil, include, rename, template, watch;
 
 gulp = require('gulp');
 
@@ -45,6 +45,11 @@ compileCoffee = function() {
   }).on('error', errorHandler)).pipe(gulp.dest('build')).on('error', errorHandler);
 };
 
+// copy views
+copyViews = function() {
+  return gulp.src('assets/views/**/*.pug').pipe(gulp.dest('build/views/')).on('error', errorHandler);
+};
+
 // compile test files
 compileTest = function() {
   return gulp.src('assets-test/**/[!_]*.coffee', {
@@ -59,6 +64,7 @@ compileTest = function() {
 // watch files
 watch = function() {
   gulp.watch(['assets/**/*.coffee'], compileCoffee);
+  gulp.watch(['assets/views/**/*.pug'], copyViews);
   gulp.watch(['assets-test/**/*.coffee'], compileTest);
 };
 
@@ -99,4 +105,4 @@ errorHandler = function(err) {
 };
 
 // default task
-gulp.task('default', gulp.series(compileConfig, execConfig, compileCoffee, compileTest, watch));
+gulp.task('default', gulp.series(compileConfig, execConfig, compileCoffee, copyViews, compileTest, watch));

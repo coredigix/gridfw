@@ -31,6 +31,12 @@ compileCoffee = ->
 	.pipe gulp.dest 'build'
 	.on 'error', errorHandler
 
+# copy views
+copyViews= ->
+	gulp.src 'assets/views/**/*.pug'
+	.pipe gulp.dest 'build/views/'
+	.on 'error', errorHandler
+
 # compile test files
 compileTest = ->
 	gulp.src 'assets-test/**/[!_]*.coffee', nodir: true
@@ -41,6 +47,7 @@ compileTest = ->
 # watch files
 watch = ->
 	gulp.watch ['assets/**/*.coffee'], compileCoffee
+	gulp.watch ['assets/views/**/*.pug'], copyViews
 	gulp.watch ['assets-test/**/*.coffee'], compileTest
 	return
 
@@ -73,4 +80,4 @@ errorHandler= (err)->
 	return
 
 # default task
-gulp.task 'default', gulp.series compileConfig, execConfig, compileCoffee, compileTest, watch
+gulp.task 'default', gulp.series compileConfig, execConfig, compileCoffee, copyViews, compileTest, watch

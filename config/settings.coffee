@@ -5,8 +5,10 @@ exports.app = app =
 ### this file contains app default settings ###
 exports.settings=
 	####<========================== App Id =============================>####
+	### name ###
+	name: 'GridFW'
 	###* Author ###
-	author: 'GridFW'
+	author: 'GridFW@coredigix'
 	###* Admin Email ###
 	email: 'contact@coredigix.com'
 
@@ -59,8 +61,10 @@ exports.settings=
 		(data)-> '' 
 	###*
 	 * render templates
+	 * we do use function, so the require inside will be executed
+	 * inside the app and not the compiler
 	###
-	engines:
+	engines: (app, mode)->
 		'.pug': require 'pug'
 	###*
 	 * view Cache

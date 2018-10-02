@@ -12,7 +12,6 @@ class RouteMapper
 	# append new node
 	append: (method, attrs)->
 		# check for node
-		routeNode = @[method]
 		if routeNode
 			throw new Error "A controller already set to this route: #{method} #{@route}" if attrs.c and routeNode.c
 		else

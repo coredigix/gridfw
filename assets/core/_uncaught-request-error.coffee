@@ -4,7 +4,6 @@
 
 _uncaughtRequestErrorHandler = (err, ctx, app)->
 	settings = app.s
-
 	if err
 		if typeof err.code is 'number'
 		else 
@@ -12,8 +11,11 @@ _uncaughtRequestErrorHandler = (err, ctx, app)->
 	else
 		err = new GError 520, 'Unknown Error!'
 
-	# everything isnt 404 is a fatal error
-	ctx.fatalError 'UNCAUGHT_ERROR', err unless err.code is 404
+	# everything unless 404 is a fatal error
+	if err.code is 404
+		ctx.debug 'PAGE NOT FOUND', ctx.url
+	else
+		ctx.fatalError 'UNCAUGHT_ERROR', err
 
 	# render error
 	unless ctx.finished
@@ -27,5 +29,5 @@ _uncaughtRequestErrorHandler = (err, ctx, app)->
 		# render
 		ctx.statusCode = err.code unless ctx.headersSent
 		errorTemplates = settings[<%= settings.errorTemplates %>]
-		await ctx.send errorTemplates[errorKey] || errorTemplates[defErrKey], ctx
+		await ctx.render errorTemplates[errorKey] || errorTemplates[defErrKey]
 	return

@@ -19,6 +19,9 @@ Object.defineProperties GridFW.prototype,
 			else
 				rawPath = url.substr 0, i
 				rawUrlQuery = url.substr i + 1
+			# locals
+			locals = Object.create @locals,
+				ctx: value: ctx
 			# basic ctx attributes
 			Object.defineProperties ctx,
 				app: value: this
@@ -29,8 +32,10 @@ Object.defineProperties GridFW.prototype,
 				method: value: method
 				url: value: req.url
 				# locals
-				locals: value: Object.create @locals,
-					ctx: value: ctx
+				locals: value: locals
+				data: value: locals
+				# render
+				view: UNDEFINED
 			# add to request
 			Object.defineProperties req,
 				res: value: ctx
@@ -90,15 +95,14 @@ Object.defineProperties GridFW.prototype,
 				if v in [undefined, ctx]
 					# if a view is set
 					if ctx.view
-						do ctx.send
+						await ctx.render()
 				else
-					ctx.send v
+					await ctx.render v
 			# execute post processes
 			if ctx.p
 				for handler in routeNode.p
 					await handler ctx
 		catch err
-			console.log '----- ', ctx.url
 			# excute user defined error handlers
 			if routeNode?.e
 				for handler in routeNode.e
@@ -109,9 +113,8 @@ Object.defineProperties GridFW.prototype,
 					catch e
 						err = e
 			if err
-				console.log '****'
 				await _uncaughtRequestErrorHandler err, ctx, this
-				.catch (err)-> @fatalError 'HANDLE-REQUEST', err
+				.catch (err)=> @fatalError 'HANDLE-REQUEST', err
 		finally
 			# close the request if not yeat closed
 			unless ctx.finished

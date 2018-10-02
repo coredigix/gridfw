@@ -121,34 +121,47 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 	# check if it is a static or dynamic route
 	isDynamic = /\/:|\*$/.test route
 	# route key
-	routeKey = if isDynamic then route.replace(/([:*])/g, '?$1') else route.replace /\/\?([:*])/g, '$1'
+	routeKey = if isDynamic then route.replace(/([:*])/g, '?$1') else 
 	# get some already created node if exists
 	allRoutes = app[ALL_ROUTES]
-	routeMapper = allRoutes[routeKey]
+	ignoreCase = settings[<%= settings.routeIgnoreCase %>]
 	# if dynamic route
 	if isDynamic
 		# if has controller, create the route
 		if nodeAttrs.c
-			# create mapper if not exists
-			unless routeMapper
-				routeMapper= allRoutes[routeKey] = new RouteMapper app, route
-			# add handlers to route
-			routeMapper.append method, nodeAttrs
-			# map dynamic route
-			app.debug 'ROUTER', 'Add dynamic route: ', method, route
-			_linkDynamicRoute app, route, routeMapper
+			# controller to all route
+			if route is '/*'
+				app.warn 'ROUTER', "[!] Add universal \"#{method} \\*\" will hide other routes"
+				routeMapper = allRoutes['/?*'] = app.m
+			else
+				app.debug 'ROUTER', 'Add dynamic route: ', method, route
+				# lowercase and encode static parts
+				route = route.replace /\/([^:*][^\/]*)/g, (v)->
+					v = v.toLowerCase() if ignoreCase
+					encodeurl v
+				# create mapper if not exists
+				routeMapper = allRoutes[routeKey]
+				unless routeMapper
+					routeMapper= allRoutes[routeKey] = new RouteMapper app, route
+				# add handlers to route
+				routeMapper.append method, nodeAttrs
+				# map dynamic route
+				_linkDynamicRoute app, route, routeMapper
 		# else add handler to any route or future route that matches
 		else
 			@_registerRouteHandlers app, route, nodeAttrs
 	# if static route, create node even no controller is specified
 	else
 		# convert route to lowercase unless case sensitive
-		route = route.toLowerCase() unless settings[<%= settings.routeIgnoreCase %>]
+		route = route.toLowerCase() unless ignoreCase
 		# encode URL
 		route = encodeurl route
 		# create route mapper if not exists
+		routeKey = route.replace /\/\?([:*])/g, '/$1'
+		routeMapper = allRoutes[routeKey]
 		unless routeMapper
-			routeMapper= allRoutes[routeKey] = new RouteMapper app, route
+			routeMapper= allRoutes[routeKey] =
+			if route is '/' then app.m else new RouteMapper app, route
 		# add handler to node
 		routeMapper.append method, nodeAttrs
 		# map as static route if has controller

@@ -31,14 +31,14 @@ GridFW::_render = (templatePath, locals)->
 		engines = settings[<%= settings.engines %>]
 		# absolute path
 		if path.isAbsolute filePath
-			template = _loadTemplateFileContent engines, filePath
+			template = await _loadTemplateFileContent engines, filePath
 		# relative to views
 		else
 			for v in settings[<%= settings.views %>]
-				template = _loadTemplateFileContent engines, (path.join v, filePath)
-				if template.content?
+				template = await _loadTemplateFileContent engines, (path.join v, filePath)
+				if template.content
 					break
-		unless template.content?
+		unless template.content
 			throw new GError 501, "Missing template: #{filePath}"
 
 		# compile template
@@ -59,12 +59,13 @@ _loadTemplateFileContent= (engines, filePath) ->
 		module: null
 	for ext, module of engines
 		try
-			result.content	= await fs.readFile if filePath.endsWith ext then filePath else filePath + ext
+			fPath = if filePath.endsWith ext then filePath else filePath + ext
+			result.content	= await fs.readFile fPath, 'utf8'
 			result.module	= module
 			break
 		catch err
 			if err and err.code is 'ENOENT'
 				# file not found, go to next file
 			else
-				throw err	
+				throw err
 	result
