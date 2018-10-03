@@ -27,8 +27,9 @@ _console_welcome = (app) ->
 	console.log """
 
 \tGridFW>> Running As:
-\t\t✔︎ Name:\t #{app.s[<%=settings.name %>]}
-\t\t✔︎ Autor:\t #{app.s[<%=settings.author %>]}
-\t\t✔︎ Admin Email:\t #{app.s[<%=settings.email %>]}
+\t\t✔︎ Name:\t\t #{app.s[<%=settings.name %>]}
+\t\t✔︎ Autor:\t\t #{app.s[<%=settings.author %>]}
+\t\t✔︎ Admin Email:\t\t #{app.s[<%=settings.email %>]}
+\t\t✔︎ Framework version:\t #{app.version}
 \x1b[36m└─────────────────────────────────────────────────────────────────────────────────────────┘\x1b[0m\n
 """

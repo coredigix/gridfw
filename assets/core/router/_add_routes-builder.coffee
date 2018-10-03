@@ -113,8 +113,14 @@ class _RouteBuiler
 		throw new Error 'middleware expected function' unless typeof middleware is 'function'
 		# create list
 		@m ?= []
+		# sub app
+		if middleware instanceof GridfW
+			#TODO
+			throw new Error "Sub apps are not supported by this framework version {#{@version}}. please upgrade"
+			# @m.push (ctx)->
+			# 	middleware.handle Object.create ctx.req, Object.create ctx
 		# Gridfw format
-		if middleware.length is 1
+		else if middleware.length is 1
 			@m.push middleware
 		# compatibility with express
 		else if middleware.length is 3

@@ -42,14 +42,12 @@ _exitingProcess = (app, code)->
 		_doExit()
 	return
 _doExit = ->
-	console.log '----- do exit'
 	# exit each app
 	exitApp = (app)->
 		# remove listener to exit code
 		process.off 'beforeExit', app._exitCb
 		# do cleaning
 		app.info 'CORE', "Existing process. Code: #{code}"
-		console.log '------- exit info'
 		# stop the server
 		# waiting for all conenctions to be closed
 		# await app.close().catch (err)->
@@ -62,6 +60,7 @@ _doExit = ->
 	asyncOperations = []
 	# do exit
 	loop
+		break unless _exitingProcessQeu.length
 		# pop data
 		code	= _exitingProcessQeu.pop()
 		app 	= _exitingProcessQeu.pop()
@@ -70,7 +69,5 @@ _doExit = ->
 	# waiting for async operations
 	await Promise.all asyncOperations
 	# stop process if no other operation is in process
-	console.log '---- exit ----'
 	process.exit()
-	console.log '---- exiting shit'
 	return

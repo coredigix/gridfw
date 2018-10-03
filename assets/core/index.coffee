@@ -5,6 +5,7 @@ path = require 'path'
 fs	 = require 'mz/fs'
 LRUCache	= require 'lru-cache'
 
+PKG			= require '../../package.json'
 Context		= require '../context'
 LoggerFactory= require '../lib/logger'
 GError		= require '../lib/error'
@@ -105,6 +106,8 @@ class GridFW
 			[DYNAMIC_ROUTES]: value: Object.create null
 			#TODO check if this cache optimise performance for 20 routes
 			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
+			# plugins
+			_plugins: value: UNDEFINED
 		# resolve settings based on current mode
 		for v, k in settings
 			if typeof v is 'function'
@@ -132,6 +135,8 @@ class GridFW
 Object.defineProperties GridFW.prototype,
 	### if the server is listening ###
 	listening: get: -> @server?.listening || false
+	# framework version
+	version: value: PKG.version
 
 # consts
 Object.defineProperties GridFW,
@@ -141,6 +146,8 @@ Object.defineProperties GridFW,
 	# param
 	PATH_PARAM : value: <%= app.PATH_PARAM %>
 	QUERY_PARAM: value: <%= app.QUERY_PARAM %>
+	# framework version
+	version: value: PKG.version
 
 #=include _errors.coffee
 #=include _log_welcome.coffee
