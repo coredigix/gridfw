@@ -16,6 +16,8 @@ RouteNode	= require '../router/route-node'
 fastDecode	= require 'fast-decode-uri-component'
 encodeurl	= require 'encodeurl'
 
+compareVersion = require 'compare-versions'
+
 # default config
 cfg = require './config'
 DEFAULT_SETTINGS = cfg.config
@@ -38,6 +40,7 @@ ALL_ROUTES	= Symbol 'All routes'
 STATIC_ROUTES	= Symbol 'Static routes'
 DYNAMIC_ROUTES	= Symbol 'Dynamic routes'
 CACHED_ROUTES	= Symbol 'Cached_routes'
+PLUGINS			= Symbol 'Plugins'
 
 
 # default used protocol when non specified, in [http, https, http2]
@@ -107,7 +110,7 @@ class GridFW
 			#TODO check if this cache optimise performance for 20 routes
 			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
 			# plugins
-			_plugins: value: UNDEFINED
+			[PLUGINS]: value: Object.create null
 		# resolve settings based on current mode
 		for v, k in settings
 			if typeof v is 'function'
@@ -158,6 +161,7 @@ Object.defineProperties GridFW,
 #=include _listen.coffee
 #=include _close.coffee
 #=include _query-parser.coffee
+#=include _plugin.coffee
 
 # exports
 module.exports = GridFW

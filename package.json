@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/coredigix/gridfw#readme",
   "dependencies": {
+    "compare-versions": "^3.4.0",
     "content-disposition": "^0.5.2",
     "create-symlink": "^1.0.0",
     "encodeurl": "^1.0.2",
