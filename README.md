@@ -28,14 +28,6 @@ app
 app.locals.myGlobalLocal = 'my value'
 delete app.locals.myGlobalLocal = 'my value'
 
-// getter
-app.locals_getter('get_ip_as_example_name', function(ctx){
-	return ctx.ip
-})
-// getter once for each request (the function will be called only once on each request)
-app.locals_getter_once('param_name', function(ctx){
-	return 'value cached for current request';
-	})
 ```
 * Default locals
 	* _ctx: access to context variable
@@ -92,15 +84,30 @@ ctx.params.paramName
 // raw params (origine form) will be in
 ctx.raw.params.paramName
 
-// resolve path param
-app.param('param-name', async function(ctx, data){
-	// do resolve logic, could be call to database
-	result = await resolve(data);
-	return result;
-	})
+// params
+app.params({
+	paramName:{
+		check: regex or function
+		// convert, resolve or handle the param
+		handler: async function(ctx, data){
+			// ...
+			return data // resolved value
+		}
+	}
+})
 
-// resolve query param
-app.queryParam('paramName', (ctx, data) => resolvePromise(data) )
+
+// query param
+app.queryParams({
+	paramName:{
+		check: regex or function
+		// convert, resolve or handle the param
+		handler: async function(ctx, data){
+			// ...
+			return data // resolved value
+		}
+	}
+})
 
 ```
 
@@ -287,28 +294,6 @@ app
 	.get(['/multiple', '/paths'], cb)
 	// use simple params
 	.get('/users/:uid/books/:bookId')
-	.get('/files/{category}/{filename}')
-	.get('/articles/:category/{:/(?<name>[0-9a-f]+)-(?<id>\d{2}).html/})
-	// params using regex
-	.get('/users/:uid/books/:bookId',{
-		params:{
-			uid: /^[a-z]$/i,
-			bookId: /^[0-9]{10}$/,
-			//-----
-			uid:{
-				check: /^[a-z0-9]+$/i, // Regex or function that returns true or false
-				convert: function(uid){
-					return UserModel.findOne({_id: uid})
-				}
-			},
-			// use Model types
-			uid: Model.required.ObjectId
-		},
-		// handler
-		handler: function(ctx, uid='default value', bookIdk=Express.re)){}
-	})
-// Regex: will not be indexed!
-	.get(/\/[0-9]{15}$/, function(){})
 
 // remove route
 	app.route('route').remove() // remove all listeners on this route
