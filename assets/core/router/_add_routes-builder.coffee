@@ -108,38 +108,42 @@ class _RouteBuiler
 	 * .use (ctx)->
 	 * .use (ctx, res, next)-> # express compatible format, best to use it only with express middlewares
 	 * .use (err, ctx, res, next)-> # express error handler compatible format, best to use it only with express middlewares
+	 * .use middleware1, ... # could add multiple middlewares at once
 	###
 	use: (middleware)->
-		throw new Error 'middleware expected function' unless typeof middleware is 'function'
 		# create list
 		@m ?= []
-		# sub app
-		if middleware instanceof GridfW
-			#TODO
-			throw new Error "Sub apps are not supported by this framework version {#{@version}}. please upgrade"
-			# @m.push (ctx)->
-			# 	middleware.handle Object.create ctx.req, Object.create ctx
-		# Gridfw format
-		else if middleware.length is 1
-			@m.push middleware
-		# compatibility with express
-		else if middleware.length is 3
-			@m.push (ctx)->
-				new Promise (resolve, reject)->
-					middleware ctx, ctx.res, (err)->
-						if err then reject err
-						else resolve()
-		# express error handler
-		#TODO check if this error handler is compatible
-		else if middleware.length is 4
-			@e.push (error)->
-				new Promise (resolve, reject)->
-					middleware error, error.ctx, error.ctx.res, (err)->
-						if err then reject err
-						else resolve()
-		# Uncknown format
-		else
-			throw new Error 'Illegal middleware format'
+		# append middlewares
+		for middleware in arguments
+			# sub app
+			if middleware instanceof GridfW
+				#TODO
+				throw new Error "Sub apps are not supported by this framework version {#{@version}}. please upgrade"
+				# @m.push (ctx)->
+				# 	middleware.handle Object.create ctx.req, Object.create ctx
+			# Gridfw format
+			else unless typeof middleware is 'function'
+				throw new Error 'middleware expected function'
+			else if middleware.length is 1
+				@m.push middleware
+			# compatibility with express
+			else if middleware.length is 3
+				@m.push (ctx)->
+					new Promise (resolve, reject)->
+						middleware ctx, ctx.res, (err)->
+							if err then reject err
+							else resolve()
+			# express error handler
+			#TODO check if this error handler is compatible
+			else if middleware.length is 4
+				@e.push (error)->
+					new Promise (resolve, reject)->
+						middleware error, error.ctx, error.ctx.res, (err)->
+							if err then reject err
+							else resolve()
+			# Uncknown format
+			else
+				throw new Error 'Illegal middleware format'
 		# return "this" for chain
 		this
 	###*

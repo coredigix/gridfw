@@ -43,6 +43,7 @@
   "devDependencies": {
     "cli-table": "^0.3.1",
     "gulp": "^4.0.0",
+    "gulp-chug": "^0.5.1",
     "gulp-coffeescript": "0.0.15",
     "gulp-include": "^2.3.1",
     "gulp-rename": "^1.4.0",
