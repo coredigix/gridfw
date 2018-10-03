@@ -27,6 +27,8 @@ UNDEFINED=
 	configurable: true
 	writable: true
 EMPTY_OBJ = Object.freeze Object.create null
+# void function (do not change)
+# VOID_FX = ->
 
 # View cache
 VIEW_CACHE = Symbol 'View cache'
@@ -115,6 +117,15 @@ class GridFW
 		if settings[<%= settings.viewCache %>]
 			@[VIEW_CACHE] = new LRUCache
 				max: settings[<%= settings.viewCacheMax %>]
+		# do some process before exiting process
+		# process off listener
+		exitCb = @_exitCb = (code)=> _exitingProcess this, code
+		process.on 'SIGINT', exitCb
+		process.on 'SIGTERM', exitCb
+		process.on 'beforeExit', exitCb
+		
+		# print welcome message
+		_console_welcome this
 
 
 # getters
@@ -131,6 +142,7 @@ Object.defineProperties GridFW.prototype,
 #=include _uncaught-request-error.coffee
 #=include _render.coffee
 #=include _listen.coffee
+#=include _close.coffee
 #=include _query-parser.coffee
 
 # exports

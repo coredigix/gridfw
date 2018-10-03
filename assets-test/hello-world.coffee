@@ -31,6 +31,13 @@ app.get '/test hello/:var/:var2', (ctx)->
 	console.log '--- gotin'
 	ctx.send 'got great results'
 
+# test of route builder
+app.get '/builder/:mm/:p'
+	.then (ctx)->
+		console.log '---- param[mm] ', ctx.params.mm
+		console.log '---- param[p] ', ctx.params.p
+		ctx.send 'builder works'
+
 
 # run the server at port 3000
 app.listen 3000

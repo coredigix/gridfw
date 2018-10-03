@@ -17,32 +17,34 @@ class RouteMapper
 		else
 			routeNode = @[method] = new RouteNode @app, this, method
 	
+		# add controler
+		if attrs.c
+			v = attrs.c
+			throw new Error 'The controller expected function' unless typeof v is 'function'
+			throw new Error 'The controller expect exactly one argument' if v.length > 1
+			routeNode.c = v
 		# add handlers
 		for k, v of attrs
-			# add controler
-			if k is 'c'
-				throw new Error 'The controller expected function' unless typeof v is 'function'
-				throw new Error 'The controller expect exactly one argument' if v.length > 1
-				routeNode.c = v
-			else if typeof v is 'function'
-				(routeNode[k] ?= []).push v
-			else if Array.isArray v
-				# check is array of functions
-				for a in v
-					throw new Error 'Handler expected function' unless typeof a is 'function'
-				# add
-				ref= routeNode[k]
-				# append handlers
-				if ref
+			if v
+				if k in ['c', '$']
+					continue
+				else if typeof v is 'function'
+					(routeNode[k] ?= []).push v
+				else if Array.isArray v
+					# check is array of functions
 					for a in v
-						ref.push a
-				# add the whole array
+						throw new Error 'Handler expected function' unless typeof a is 'function'
+					# add
+					ref= routeNode[k]
+					# append handlers
+					if ref
+						for a in v
+							ref.push a
+					# add the whole array
+					else
+						routeNode[k] = v
 				else
-					routeNode[k] = v
-			else if k is '$'
-				continue
-			else
-				throw new Error "Illegal node attribute: #{k}"
+					throw new Error "Illegal node attribute: #{k}"
 		# param resolvers
 		if attrs.$
 			ref = if @route is '/' then @app.$ else routeNode.$

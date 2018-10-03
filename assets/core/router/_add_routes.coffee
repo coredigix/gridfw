@@ -59,14 +59,14 @@ Object.defineProperties GridFW.prototype,
 				else
 					throw new Error 'Illegal handler'
 				# chain
-				this
+				return this
 			# .on 'GET', '/route'
 			# create new node only if controller is specified, add handler to other routes otherwise
 			when 2
 				# do builder
-				return new _RouteBuiler this, (node)-> _createRouteNode this, method, route, node
+				return new _RouteBuiler this, (node)=> _createRouteNode this, method, route, node
 			else
-				throw new Error 'Illegal arguments'
+				throw new Error '[app.on] Illegal arguments ' + JSON.stringify arguments
 	###*
 	 * Remove route
 	 * @example

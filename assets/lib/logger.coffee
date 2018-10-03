@@ -4,6 +4,7 @@
  * @example
  * app.log('title', ...args)
 ###
+GError  = require './error'
 LEVELS= ['debug', 'log', 'info', 'warn', 'error', 'fatalError']
 _VOID = ->
 module.exports = (obj, options)->
@@ -48,7 +49,12 @@ _createConsoleLogMethod = (level, obj, method)->
 	# Add
 	Object.defineProperty obj, method,
 			value: if LEVELS.indexOf(method) < level then _VOID else ->
+				# change GError Presentation
 				args = Array.from arguments
+				for el, i in args
+					if el instanceof GError
+						args[i] = el.toString()
+				# 
 				args.unshift mt
 				args[1] = args[1] + ">>\t"
 				args.push "\x1b[0m"

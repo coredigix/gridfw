@@ -83,6 +83,6 @@ HTTP_SUPPORTED_METHODS.forEach (method)->
 				when 2
 					@on method, route, handler
 				when 1
-					@on method
+					@on method, route
 				else
 					throw new Error 'Illegal arguments'

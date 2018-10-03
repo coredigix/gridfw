@@ -25,5 +25,16 @@ class GError extends Error
 		message: @message
 		stack: @stack
 		extra: @extra
-
+	toString: ->
+		err = "\nGError[#{@code}]: #{@stack}\n"
+		extra = @extra
+		if extra
+			if extra instanceof GError
+				extra = extra.toString()
+			else if extra instanceof Error
+				extra = extra.stack
+			else if typeof extra is 'object'
+				extra = JSON.pretty extra
+			err = err.concat "Caused by:\n", extra
+		err
 module.exports = GError
