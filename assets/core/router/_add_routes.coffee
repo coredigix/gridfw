@@ -134,9 +134,8 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 				app.warn 'ROUTER', "[!] Add universal \"#{method} \\*\" will hide other routes"
 				routeMapper = allRoutes['/?*'] = app.m
 			else
-				app.debug 'ROUTER', 'Add dynamic route: ', method, route
 				# lowercase and encode static parts
-				route = route.replace /\/([^:*][^\/]*)/g, (v)->
+				route = route.replace /\/([^:][^\/]*)/g, (v)->
 					v = v.toLowerCase() if ignoreCase
 					encodeurl v
 				# create mapper if not exists
@@ -144,9 +143,12 @@ _createRouteNode = (app, method, route, nodeAttrs)->
 				unless routeMapper
 					routeMapper= allRoutes[routeKey] = new RouteMapper app, route
 				# add handlers to route
+				app.debug 'ROUTER', 'Add dynamic route: ', method, route
 				routeMapper.append method, nodeAttrs
 				# map dynamic route
-				_linkDynamicRoute app, route, routeMapper
+				mapper = _linkDynamicRoute app, route
+				throw new Error "Dynamic mapper already set to: #{method} #{route}" if mapper.$
+				mapper.$$ = routeMapper
 		# else add handler to any route or future route that matches
 		else
 			@_registerRouteHandlers app, route, nodeAttrs
@@ -176,7 +178,7 @@ _createRouteNode = (app, method, route, nodeAttrs)->
  * link dynamic route
 ###
 _linkDynamicRouteParamSet = new Set() # reuse this for performance purpose
-_linkDynamicRoute = (app, route, routeMapper)->
+_linkDynamicRoute = (app, route)->
 	# if convert static parts to lower case
 	convLowerCase = app.s[<%= settings.routeIgnoreCase %>]
 	# check param names are not duplicated
@@ -187,17 +189,19 @@ _linkDynamicRoute = (app, route, routeMapper)->
 		# if param
 		if part.startsWith '/:'
 			part = part.substr 2
+			# check param is correct
+			throw new Error 'Could not use "__proto__" as param name' if part is '__proto__'
+			throw new Error "Param names mast matche [a-zA-Z0-9_-]. Illegal param: [#{part}] at route: #{route}" unless ROUTE_PARAM_MATCH.test part
 			# uniqueness of param name
 			throw new Error "Dupplicated param name: #{part}" if _linkDynamicRouteParamSet.has part
 			_linkDynamicRouteParamSet.add part
-			# check param is correct
-			throw new Error 'Could not use "__proto__" as param name' if part is '__proto__'
-			throw new Error "Params mast matches [a-zA-Z0-9_-]. Illegal param: [#{part}] at route: #{route}" unless ROUTE_PARAM_MATCH.test part
 			# var
+			currentNode.$ ?= Object.create null
 			currentNode = currentNode.$[part] ?= Object.create null
 		# if static part
 		else
 			part = part.toLowerCase() if convLowerCase
 			currentNode = currentNode[part] ?= Object.create null
-	return
+	# return
+	currentNode
 

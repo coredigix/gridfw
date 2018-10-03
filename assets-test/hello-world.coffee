@@ -21,6 +21,16 @@ app.get '/hello world', (ctx)->
 	ctx.info 'My service', "---- got #{ctx.path}"
 	ctx.send 'hi'
 
+# dynamic route
+app.get '/test/:var/:var2', (ctx)->
+	console.log '--- gotin'
+	ctx.send 'got great results'
+
+# dynamic route
+app.get '/test hello/:var/:var2', (ctx)->
+	console.log '--- gotin'
+	ctx.send 'got great results'
+
 
 # run the server at port 3000
 app.listen 3000

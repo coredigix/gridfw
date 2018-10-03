@@ -176,16 +176,16 @@ _resolveRoute= (app, method, route)->
 
 			# check for route
 			_resolveRouteA2.length = 0
-			_resolveRouteA2.push [ app.m, Object.create null ]
-			for part in route.split '/'
+			_resolveRouteA2.push [ app[DYNAMIC_ROUTES], Object.create null ]
+			for part in route.substr(1).split '/'
+				# ignore case for static part
+				staticPart = '/' + part
+				staticPart = staticPart.toLowerCase() if ignoreCase is 1
 				# invert arrays
 				[_resolveRouteA1, _resolveRouteA2] = [_resolveRouteA2, _resolveRouteA1]
 				_resolveRouteA2.length = 0
 				# go through current step resolved nodes
 				for nodeArr in _resolveRouteA1
-					# ignore case for static part
-					staticPart = '/' + part
-					staticPart = staticPart.toLowerCase() if ignoreCase is 1
 					# check if static part
 					node = nodeArr[0]
 					nextNode = node[staticPart]
@@ -215,7 +215,7 @@ _resolveRoute= (app, method, route)->
 			_resolveRouteA1.length = 0
 			`R: //`
 			for nodeArr in _resolveRouteA2
-				nodeMapper = nodeArr[0]
+				routeMapper = nodeArr[0].$$
 				# get Method
 				node = routeMapper[method] or (method is 'HEAD' and routeMapper.GET) or routeMapper.ALL
 				continue unless node

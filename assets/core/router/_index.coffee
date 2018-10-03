@@ -5,7 +5,7 @@
 # - get routeNode
 # - remove node param
 do ->
-	ROUTE_PARAM_MATCH = /^:[a-z0-9_-]$/i
+	ROUTE_PARAM_MATCH = /^[a-z0-9_-]+$/i
 
 	
 	#=include _add_routes.coffee
