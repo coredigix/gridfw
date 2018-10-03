@@ -33,6 +33,10 @@ app.get '/test hello/:var/:var2', (ctx)->
 
 # test of route builder
 app.get '/builder/:mm/:p'
+	.param 'p', /^\d+$/, (ctx, data)->
+		ctx.info 'myService', 'Resolve param "p"'
+		ctx.debug 'myService', 'data: ', data
+		return 'ppppmmmm-----'
 	.then (ctx)->
 		console.log '---- param[mm] ', ctx.params.mm
 		console.log '---- param[p] ', ctx.params.p

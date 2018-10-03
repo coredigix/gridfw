@@ -148,12 +148,23 @@ class _RouteBuiler
 		this
 	###*
 	 * Param resolvers
+	 * .param(name, regex)
+	 * .param(name, resolver)
+	 * .param(name, regex, resolver)
 	###
 	param: (name, regex, resolver)->
 		throw new Error 'param name expected string' unless typeof name is 'string'
-		throw new Error 'regex expected RegExp' unless regex instanceof RegExp
-		throw new Error 'resolver expect function' unless typeof resolver is 'function'
-
 		throw new Error "Param name [#{name}] already set" if @$[name]
+		switch arguments.length
+			when 2
+				if typeof regex is 'function'
+					[regex, resolver] = [null, regex]
+				else unless regex instanceof RegExp
+					throw new Error 'regex expected RegExp'
+			when 3
+				throw new Error 'regex expected RegExp' unless regex instanceof RegExp
+				throw new Error 'resolver expect function' unless typeof resolver is 'function'
 		@$[name] = [regex, resolver]
+		# chain
+		this
 Object.defineProperty _RouteBuiler, 'end', get: -> do @build

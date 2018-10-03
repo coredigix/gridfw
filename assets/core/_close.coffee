@@ -52,10 +52,10 @@ _doExit = ->
 		console.log '------- exit info'
 		# stop the server
 		# waiting for all conenctions to be closed
-		await app.close().catch (err)->
-			console.log '---- server eerrrrror'
-			app.fatalError 'CORE', err
-		console.log '----- exit app server'
+		# await app.close().catch (err)->
+		# 	console.log '---- server eerrrrror'
+		# 	app.fatalError 'CORE', err
+		# console.log '----- exit app server'
 		# other operations
 		# ....
 	# async operations

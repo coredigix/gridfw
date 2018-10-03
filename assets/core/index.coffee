@@ -132,8 +132,15 @@ class GridFW
 Object.defineProperties GridFW.prototype,
 	### if the server is listening ###
 	listening: get: -> @server?.listening || false
+
+# consts
+Object.defineProperties GridFW,
+	# consts
 	DEV_MODE: value: <%= app.DEV %>
 	PROD_MODE: value: <%= app.PROD %>
+	# param
+	PATH_PARAM : value: <%= app.PATH_PARAM %>
+	QUERY_PARAM: value: <%= app.QUERY_PARAM %>
 
 #=include _errors.coffee
 #=include _log_welcome.coffee

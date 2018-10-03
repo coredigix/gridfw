@@ -50,7 +50,7 @@ class RouteMapper
 			ref = if @route is '/' then @app.$ else routeNode.$
 			for k,v of attrs.$
 				throw new Error "Param [#{k}] already set to route #{method} #{@route}" if ref[k]
-				unless Array.isArray(v) and v.length is 2 and (v[0] instanceof RegExp) and (typeof v[1] is 'function')
+				unless Array.isArray(v) and v.length is 2 and (!v[0] or v[0] instanceof RegExp) and (!v[1] or typeof v[1] is 'function')
 					throw new Error "Illegal param format"
 				ref[k] = v
 		# chain

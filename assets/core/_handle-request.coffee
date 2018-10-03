@@ -74,13 +74,15 @@ Object.defineProperties GridFW.prototype,
 			# resolve params
 			if rawParams and routeParamResolvers
 				for k, v of rawParams
-					if typeof routeParamResolvers[k] is 'function'
-						params[k] = await routeParamResolvers[k] ctx, v
+					ref = routeParamResolvers[k]
+					if ref and typeof ref[1] is 'function'
+						params[k] = await ref[1] ctx, v, <%= app.PATH_PARAM %>
 			# resolve query params
 			if rawUrlQuery and routeParamResolvers
 				for k, v of queryParams
-					if typeof routeParamResolvers[k] is 'function'
-						queryParams[k] = await routeParamResolvers[k] ctx, v
+					ref = routeParamResolvers[k]
+					if ref and typeof ref[1] is 'function'
+						queryParams[k] = await ref[1] ctx, v, <%= app.QUERY_PARAM %>
 			# execute middlewares
 			if routeNode.m
 				for handler in routeNode.m

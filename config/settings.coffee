@@ -1,7 +1,11 @@
 # App consts
 exports.app = app =
+	# modes
 	DEV: 0
 	PROD: 1
+	# params
+	PATH_PARAM : 0
+	QUERY_PARAM: 1
 ### this file contains app default settings ###
 exports.settings=
 	####<========================== App Id =============================>####
