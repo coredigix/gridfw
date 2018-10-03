@@ -36,6 +36,8 @@ Object.defineProperties GridFW.prototype,
 				data: value: locals
 				# render
 				view: UNDEFINED
+				# content length (use for monitoring)
+				contentLength: UNDEFINED
 			# add to request
 			Object.defineProperties req,
 				res: value: ctx

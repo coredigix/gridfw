@@ -69,7 +69,7 @@ Object.defineProperties Context.prototype,
 				data = ''
 			else
 				# populate Content-Length
-				@setHeader 'Content-Length', data.length
+				@setHeader 'Content-Length', @contentLength = data.length
 				# set content type
 				contentType = @contentType
 				if typeof contentType is 'string'
