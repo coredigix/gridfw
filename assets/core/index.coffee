@@ -16,6 +16,8 @@ RouteNode	= require '../router/route-node'
 fastDecode	= require 'fast-decode-uri-component'
 encodeurl	= require 'encodeurl'
 
+compareVersion = require 'compare-versions'
+
 # default config
 cfg = require './config'
 DEFAULT_SETTINGS = cfg.config
@@ -38,6 +40,7 @@ ALL_ROUTES	= Symbol 'All routes'
 STATIC_ROUTES	= Symbol 'Static routes'
 DYNAMIC_ROUTES	= Symbol 'Dynamic routes'
 CACHED_ROUTES	= Symbol 'Cached_routes'
+PLUGINS			= Symbol 'Plugins'
 
 
 # default used protocol when non specified, in [http, https, http2]
@@ -72,61 +75,8 @@ class GridFW
 		# check
 		throw new Error "Illegal mode: #{options.mode}, please use: dev or prod" if options.mode and options.mode not in ['dev', 'prod']
 		throw new Error 'options.routeCache expected number' if options.routeCache and not Number.isSafeInteger options.routeCache
-		# mode
-		mode = DEFAULT_SETTINGS_KIES[options.mode] || <%= app.DEV %>
-		# locals
-		locals = Object.create null,
-			app: value: this
-		# settings
-		settings = DEFAULT_SETTINGS.slice 0
-		# define properties
-		Object.defineProperties this,
-			# mode
-			mode: value: mode
-			### App connection ###
-			server: UNDEFINED
-			protocol: UNDEFINED
-			host: UNDEFINED
-			port: UNDEFINED
-			path: UNDEFINED
-			# settings
-			s: value: settings
-			# locals
-			locals: value: locals
-			data: value: locals
-			# root RouteMapper
-			m: value: new RouteMapper this, '/'
-			# global param resolvers
-			$: value: Object.create null
-			# view cache
-			[VIEW_CACHE]: UNDEFINED
-			# Routes
-			[ALL_ROUTES]: value: Object.create null
-			[STATIC_ROUTES]: value: Object.create null
-			[DYNAMIC_ROUTES]: value: Object.create null
-			#TODO check if this cache optimise performance for 20 routes
-			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
-			# plugins
-			_plugins: value: UNDEFINED
-		# resolve settings based on current mode
-		for v, k in settings
-			if typeof v is 'function'
-				settings[k] = v this, mode
-		# add log support
-		logOptions = level: @s.logLevel
-		LoggerFactory GridFW.prototype, logOptions
-		LoggerFactory Context.prototype, logOptions
-		# if use view cache
-		if settings[<%= settings.viewCache %>]
-			@[VIEW_CACHE] = new LRUCache
-				max: settings[<%= settings.viewCacheMax %>]
-		# do some process before exiting process
-		# process off listener
-		exitCb = @_exitCb = (code)=> _exitingProcess this, code
-		process.on 'SIGINT', exitCb
-		process.on 'SIGTERM', exitCb
-		process.on 'beforeExit', exitCb
-		
+		# configure
+		_configApp this, options
 		# print welcome message
 		_console_welcome this
 
@@ -158,6 +108,8 @@ Object.defineProperties GridFW,
 #=include _listen.coffee
 #=include _close.coffee
 #=include _query-parser.coffee
+#=include _plugin.coffee
+#=include _configure-app.coffee
 
 # exports
 module.exports = GridFW
