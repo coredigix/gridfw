@@ -19,9 +19,10 @@ encodeurl	= require 'encodeurl'
 compareVersion = require 'compare-versions'
 
 # default config
-cfg = require './config'
+CONFIG = require './config'
 DEFAULT_SETTINGS = cfg.config
 DEFAULT_SETTINGS_KIES= cfg.kies
+CHECK_SETTINGS= cfg.check
 
 
 # create empty attribute for performance
@@ -41,6 +42,12 @@ STATIC_ROUTES	= Symbol 'Static routes'
 DYNAMIC_ROUTES	= Symbol 'Dynamic routes'
 CACHED_ROUTES	= Symbol 'Cached_routes'
 PLUGINS			= Symbol 'Plugins'
+
+# flags
+IS_ENABLED				= Symbol 'is enabled'
+IS_LOADED				= Symbol 'is loaded' # is app loaded (all settings are set)
+APP_STARTING_PROMISE	= Symbol 'app starting promise' # loading promise
+REQ_HANDLER				= Symbol 'request handler'
 
 
 # default used protocol when non specified, in [http, https, http2]
@@ -67,18 +74,53 @@ class GridFW
 	 * @return {[type]}         [description]
 	###
 	constructor: (options)->
-		# load options from file path
-		unless options
-			options = Object.create null
-		else if typeof options is 'string'
-			options = require options
-		# check
-		throw new Error "Illegal mode: #{options.mode}, please use: dev or prod" if options.mode and options.mode not in ['dev', 'prod']
-		throw new Error 'options.routeCache expected number' if options.routeCache and not Number.isSafeInteger options.routeCache
-		# configure
-		_configApp this, options
+		# locals
+		locals = Object.create null,
+			app: value: app
+		# define properties
+		Object.defineProperties app,
+			# flags
+			[REQ_HANDLER]: UNDEFINED
+			[IS_ENABLED]: UNDEFINED
+			[IS_LOADED]: UNDEFINED
+			[APP_STARTING_PROMISE]: UNDEFINED
+			# mode
+			mode: get: -> @s[<%= settings.mode ?>]
+			### App connection ###
+			server: UNDEFINED
+			protocol: UNDEFINED
+			host: UNDEFINED
+			port: UNDEFINED
+			path: UNDEFINED
+			# settings
+			s: value: Array DEFAULT_SETTINGS.length
+			# locals
+			locals: value: locals
+			data: value: locals
+			# root RouteMapper
+			m: value: new RouteMapper app, '/'
+			# global param resolvers
+			$: value: Object.create null
+			# view cache
+			[VIEW_CACHE]: UNDEFINED
+			# Routes
+			[ALL_ROUTES]: value: Object.create null
+			[STATIC_ROUTES]: value: Object.create null
+			[DYNAMIC_ROUTES]: value: Object.create null
+			#TODO check if app cache optimise performance for 20 routes
+			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
+			# plugins
+			[PLUGINS]: value: Object.create null
+		# process off listener
+		exitCb = app._exitCb = (code)=> _exitingProcess app, code
+		process.on 'SIGINT', exitCb
+		process.on 'SIGTERM', exitCb
+		process.on 'beforeExit', exitCb
+		# enable settings
+		await @reload options
 		# print welcome message
 		_console_welcome this
+		return
 
 
 # getters
@@ -99,17 +141,17 @@ Object.defineProperties GridFW,
 	# framework version
 	version: value: PKG.version
 
-#=include _errors.coffee
-#=include _log_welcome.coffee
+#=include index/_errors.coffee
+#=include index/_log_welcome.coffee
 #=include router/_index.coffee
-#=include _handle-request.coffee
-#=include _uncaught-request-error.coffee
-#=include _render.coffee
-#=include _listen.coffee
-#=include _close.coffee
-#=include _query-parser.coffee
-#=include _plugin.coffee
-#=include _configure-app.coffee
+#=include index/_handle-request.coffee
+#=include index/_uncaught-request-error.coffee
+#=include index/_render.coffee
+#=include index/_listen.coffee
+#=include index/_close.coffee
+#=include index/_query-parser.coffee
+#=include index/_plugin.coffee
+#=include index/_reload.coffee
 
 # exports
 module.exports = GridFW

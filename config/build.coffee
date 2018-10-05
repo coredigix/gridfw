@@ -5,13 +5,18 @@ path = require 'path'
 
 # settings
 appSettings = []
+appSettingsCheck = []
+appSettingsDefault = []
 
 # replace settings with an array, with is faster at runtime
 i=0
 settings = data.settings
 for k,v of settings
 	settings[k] = i++
-	appSettings.push v
+	appSettings.push v.value
+	appSettingsCheck.push "#{k}: #{v.check.toString()}"
+	if v.default
+		appSettingsDefault.push "#{k}: #{v.default.toString()}"
 # save build config
 fnts = []
 i=0
@@ -28,8 +33,10 @@ appSettings= appSettings.replace /"__fx(\d+)__"/g, (_, i)->
 
 appSettings = """
 const path = require('path');
-module.exports.config= #{appSettings}
-module.exports.kies= #{JSON.stringify(settings)}
+exports.config= #{appSettings};
+exports.kies= #{JSON.stringify(settings)};
+exports.check = {#{appSettingsCheck.join(',')}};
+exports.default = {#{appSettingsDefault.join(',')}};
 """
 
 # save
