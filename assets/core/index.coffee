@@ -77,6 +77,8 @@ class GridFW
 		# locals
 		locals = Object.create null,
 			app: value: app
+		# create context
+		#TODO clone context and response
 		# define properties
 		Object.defineProperties app,
 			# flags
