@@ -13,7 +13,6 @@ REQUEST_PROTO = require './request'
 {gettersOnce} = require '../lib/define-getter-once'
 GError			= require '../lib/error'
 
-DEFAULT_ENCODING = 'utf8'
 # create empty attribute for performance
 UNDEFINED_=
 	value: undefined
@@ -96,7 +95,7 @@ CONTEXT_PROTO=
 	### response.write(chunk[, encoding], cb) ###
 	write: (chunk, encoding)->
 		new Promise (resolve, reject)->
-			@_write chunk, encoding || DEFAULT_ENCODING, (err)->
+			@_write chunk, encoding || '<%= app.DEFAULT_ENCODING %>', (err)->
 				if err then reject err
 				else resolve()
 

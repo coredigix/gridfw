@@ -37,6 +37,7 @@ Object.defineProperties GridFW.prototype,
 ###
 _exitingProcessQeu= [] # when there is multiple servers on this process
 _exitingProcess = (app, code)->
+	app.info 'CORE', "Existing process [#{app.name}]: #{code}"
 	_exitingProcessQeu.push app, code
 	if _exitingProcessQeu.length is 2
 		_doExit()
@@ -61,6 +62,7 @@ _doExit = ->
 	# do exit
 	loop
 		break unless _exitingProcessQeu.length
+		console.log '------'
 		# pop data
 		code	= _exitingProcessQeu.pop()
 		app 	= _exitingProcessQeu.pop()
@@ -69,5 +71,7 @@ _doExit = ->
 	# waiting for async operations
 	await Promise.all asyncOperations
 	# stop process if no other operation is in process
+	console.log '----- process exit'
 	process.exit()
+	# process.abort()
 	return

@@ -6,15 +6,16 @@ exports.app = app =
 	# params
 	PATH_PARAM : 0
 	QUERY_PARAM: 1
+	# default encoding
+	DEFAULT_ENCODING: 'utf8'
 ### this file contains app default settings ###
-modes = ['dev', 'prod']
 exports.settings=
 	####<========================== App Id =============================>####
 	mode:
 		value: 'dev'
-		default: (value)-> modes.indexOf value
+		default: (value)-> ['dev', 'prod'].indexOf value
 		check: (value)->
-			throw new Error "Illegal mode #{mode}. Expected 'dev' or 'prod'" unless value in modes
+			throw new Error "Illegal mode #{mode}. Expected 'dev' or 'prod'" unless value in ['dev', 'prod']
 	### name ###
 	name:
 		value: 'GridFW'
@@ -161,15 +162,15 @@ exports.settings=
 			return
 	# plugins
 	plugins:
-		value: null
-		default: (app, mode)->
-			# dev or prod
-			isDev = mode is 0
-			# default logger
-			'gridfw-logger':
-				require: '../gridfw-logger'
-				level: if isDev then 'debug' : 'info'
-				target: 'console'
+		value: {}
+		# default: (app, mode)->
+		# 	# dev or prod
+		# 	isDev = mode is 0
+		# 	# default logger
+		# 	'gridfw-logger':
+		# 		require: '../gridfw-logger'
+		# 		level: if isDev then 'debug' : 'info'
+		# 		target: 'console'
 		check: (value)->
 			throw new Error 'plugins option expected map of plugins' unless typeof value is 'object' and value 
 

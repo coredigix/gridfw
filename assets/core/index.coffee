@@ -19,7 +19,7 @@ RouteMapper	= require '../router/route-mapper'
 RouteNode	= require '../router/route-node'
 
 PluginWrapper = require './plugin-wrapper'
-loggerFactory = require '../../gridfw-logger' #TODO change path
+loggerFactory = require '../../../gridfw-logger' #TODO change path
 
 # default config
 CONFIG = require './config'
@@ -75,12 +75,10 @@ class GridFW
 	constructor: (options)->
 		# locals
 		locals = Object.create null,
-			app: value: app
-		# create context
-		_createContext this
+			app: value: this
 		#TODO clone context and response
 		# define properties
-		Object.defineProperties app,
+		Object.defineProperties this,
 			# flags
 			[REQ_HANDLER]: UNDEFINED
 			[IS_ENABLED]: UNDEFINED
@@ -100,7 +98,7 @@ class GridFW
 			locals: value: locals
 			data: value: locals
 			# root RouteMapper
-			m: value: new RouteMapper app, '/'
+			m: value: new RouteMapper this, '/'
 			# global param resolvers
 			$: value: Object.create null
 			# view cache
@@ -113,11 +111,16 @@ class GridFW
 			# [CACHED_ROUTES]:
 			# plugins
 			[PLUGINS]: value: Object.create null
+		# create context
+		_createContext this
 		# process off listener
-		exitCb = app._exitCb = (code)=> _exitingProcess app, code
+		exitCb = @_exitCb = (code)=> _exitingProcess this, code
 		process.on 'SIGINT', exitCb
 		process.on 'SIGTERM', exitCb
 		process.on 'beforeExit', exitCb
+		# run load app
+		@reload options
+		.catch (err) => @fatalError 'CORE', err
 		# print welcome message
 		_console_welcome this
 		return
@@ -142,8 +145,8 @@ Object.defineProperties GridFW,
 	version: value: PKG.version
 
 # default logger
-loggerFactory GridFW.prototype, level: 'DEBUG'
-
+loggerFactory GridFW.prototype, level: 'debug'
+loggerFactory CONTEXT_PROTO, level: 'debug'
 
 #=include index/_create-context.coffee
 #=include index/_errors.coffee

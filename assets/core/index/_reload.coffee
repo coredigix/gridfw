@@ -120,7 +120,7 @@ _reloadSettings = (app, options)->
 		unless Reflect.hasOwnProperty options, k
 			appSettings[configKies[k]] = v app, mode
 	# plugins settings
-	if options.plugins
+	if options?.plugins
 		Object.setPrototypeOf options.plugins, CONFIG.kies[<%= settings.plugins %>]
 	return
 

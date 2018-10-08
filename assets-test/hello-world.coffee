@@ -3,13 +3,13 @@ Hello world
 ###
 
 GridFw = require '..'
-GridMonit = require '../../gridfw-monitor'
+# GridMonit = require '../../gridfw-monitor'
 
 # create server
 app = new GridFw()
 
 # add plugin
-app.plugin GridMonit()
+# app.plugin GridMonit()
 
 # append Get route
 app.get '/', (ctx)->

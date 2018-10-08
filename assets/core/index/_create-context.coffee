@@ -10,12 +10,13 @@ _createContext = (app)->
 	# context
 	class AppContext extends http.ServerResponse
 		constructor: (socket)->
+			console.log 'create context'
 			super socket
 			# locals
 			locals = Object.create appLocals,
 				ctx: value: this
 			# add properties
-			Object.defineProperties ctx,
+			Object.defineProperties this,
 				# locals
 				locals: value: locals
 				data: value: locals
@@ -24,7 +25,9 @@ _createContext = (app)->
 				# content length (use for monitoring)
 				contentLength: UNDEFINED
 				contentType: UNDEFINED
-				encoding: DEFAULT_ENCODING
+				encoding:
+					value: '<%= app.DEFAULT_ENCODING %>'
+					writable: true
 			return
 		# request class
 		@Request: AppRequest
@@ -43,6 +46,6 @@ _createContext = (app)->
 
 	# add to app
 	Object.defineProperties app,
-		Context: value: AppRequest
+		Context: value: AppContext
 		Request: value: AppRequest
 	return

@@ -4,6 +4,6 @@ module.exports=
 	mode: 'dev'
 
 	# plugins
-	plugins:
-		'gridfw-logger':
-			level: 'debug'
+	# plugins:
+	# 	'gridfw-logger':
+	# 		level: 'debug'
