@@ -38,6 +38,8 @@ exports.settings=
 	###
 	logLevel:
 		value: 'debug'
+		default: (app, mode)->
+			if mode is 0 then 'debug' else 'info'
 		check: (level)->
 			accepted = ['debug', 'log', 'info', 'warn', 'error', 'fatalError']
 			throw new Error "level expected in #{accepted.join ','}" unless level in accepted
@@ -138,7 +140,7 @@ exports.settings=
 	####<========================== Errors =============================>####
 	# Error templates
 	errorTemplates:
-		value: {}
+		value: null
 		default: (app, mode)->
 			# dev mode
 			if mode is 0
@@ -157,4 +159,17 @@ exports.settings=
 				unless typeof v is 'string'
 					throw new Error "Error templates: errorTemplates.#{k} mast be file path"
 			return
+	# plugins
+	plugins:
+		value: null
+		default: (app, mode)->
+			# dev or prod
+			isDev = mode is 0
+			# default logger
+			'gridfw-logger':
+				require: '../gridfw-logger'
+				level: if isDev then 'debug' : 'info'
+				target: 'console'
+		check: (value)->
+			throw new Error 'plugins option expected map of plugins' unless typeof value is 'object' and value 
 

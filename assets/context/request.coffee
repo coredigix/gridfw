@@ -8,9 +8,7 @@ fresh		= require 'fresh'
 {gettersOnce} = require '../lib/define-getter-once'
 
 ### response ###
-class Request extends http.IncomingMessage
-	constructor: (socket)->
-		super socket
+REQUEST_PROTO=
 	###*
 	 * Parse Range header field, capping to the given `size`.
 	 *
@@ -46,9 +44,9 @@ class Request extends http.IncomingMessage
 	header : (name)-> @getHeader name
 	get: (name)-> @getHeader name
 
-module.exports = Request
+module.exports = REQUEST_PROTO
 
-gettersOnce Request.prototype,
+gettersOnce REQUEST_PROTO,
 	### accept ###
 	_accepts: -> accepts this
 	### protocol ###
@@ -145,4 +143,4 @@ props=
 	acceptsLanguages: value: ->
 		acc = @_accepts
 		acc.languages.apply acc, arguments
-Object.defineProperties Request.prototype, props
+Object.defineProperties REQUEST_PROTO, props

@@ -61,7 +61,7 @@ SERVER_LISTENING_PROTOCOLS=
 	http: (options, app)->
 		app.debug 'CORE', 'Create HTTP server'
 		http.createServer
-			IncomingMessage : Context.Request
-			ServerResponse : Context
+			IncomingMessage : app.Request
+			ServerResponse : app.Context
 			,
 			app.handle.bind app

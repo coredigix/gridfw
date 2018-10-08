@@ -8,7 +8,7 @@ onFinishLib	= require 'on-finished'
 contentDisposition = require 'content-disposition'
 mimeType	= require 'mime-types'
 
-Request = require './request'
+REQUEST_PROTO = require './request'
 
 {gettersOnce} = require '../lib/define-getter-once'
 GError			= require '../lib/error'
@@ -21,13 +21,7 @@ UNDEFINED_=
 	writable: true
 
 ### response ###
-class Context extends http.ServerResponse
-	constructor: (socket)->
-		super socket
-
-	# request class
-	@Request: Request
-
+CONTEXT_PROTO=
 	###*
 	 * redirect to this URL
 	 * @param {string} url - target URL
@@ -91,6 +85,26 @@ class Context extends http.ServerResponse
 		# 		this
 		# 	else
 		# 		throw new Error 'Illegal arguments'
+	
+
+	### ends request ###
+	end: (data)->
+		new Promise (resolve, reject)=>
+			@_end data, (err)->
+				if err then reject err
+				else do resolve
+	### response.write(chunk[, encoding], cb) ###
+	write: (chunk, encoding)->
+		new Promise (resolve, reject)->
+			@_write chunk, encoding || DEFAULT_ENCODING, (err)->
+				if err then reject err
+				else resolve()
+
+	### commons with Context ###
+	accepts				: REQUEST_PROTO.accepts
+	acceptsEncodings	: REQUEST_PROTO.acceptsEncodings
+	acceptsCharsets		: REQUEST_PROTO.acceptsCharsets
+	acceptsLanguages	: REQUEST_PROTO.acceptsLanguages
 
 # promisify native functions
 # Object.defineProperties 
@@ -99,7 +113,7 @@ class Context extends http.ServerResponse
 #=include _context-content-types.coffee
 #=include _context-cookies.coffee
 
-gettersOnce Context.prototype,
+gettersOnce CONTEXT_PROTO,
 	### if the request is aborted ###
 	aborted: -> @req.aborted
 	###*
@@ -129,38 +143,5 @@ gettersOnce Context.prototype,
 	### accept ###
 	_accepts: -> @req._accepts
 
-
-### default values ###
-Object.defineProperties Context.prototype,
-	encoding:
-		value: DEFAULT_ENCODING
-		configurable: true
-		writable: true
-	contentType: UNDEFINED_
-
-	_end: value: Context::end
-	_write: value: Context::write
-
-Object.defineProperties Context.prototype, 
-	### ends request ###
-	end: value: (data)->
-		new Promise (resolve, reject)=>
-			@_end data, (err)->
-				if err then reject err
-				else do resolve
-	### response.write(chunk[, encoding], cb) ###
-	write: (chunk, encoding)->
-		new Promise (resolve, reject)->
-			@_write chunk, encoding || DEFAULT_ENCODING, (err)->
-				if err then reject err
-				else resolve()
-
-	### commons with Context ###
-	accepts				: value: Request::accepts
-	acceptsEncodings	: value: Request::acceptsEncodings
-	acceptsCharsets		: value: Request::acceptsCharsets
-	acceptsLanguages	: value: Request::acceptsLanguages
-
-
 # exports
-module.exports = Context
+module.exports = CONTEXT_PROTO

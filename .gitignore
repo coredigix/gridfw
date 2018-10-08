@@ -63,3 +63,4 @@ build/*
 config/build/*
 test/*
 gulp-file.tmp.*.js
+tmp/*

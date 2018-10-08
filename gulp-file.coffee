@@ -1,5 +1,6 @@
 gulp			= require 'gulp'
 gutil			= require 'gulp-util'
+fs				= require 'fs'
 # minify		= require 'gulp-minify'
 include			= require "gulp-include"
 rename			= require "gulp-rename"
@@ -23,8 +24,10 @@ compileCoffee = ->
 	gulp.src 'assets/**/[!_]*.coffee', nodir: true
 	# include related files
 	.pipe include hardFail: true
+	# tmp file for debuging
+	.pipe gulp.dest 'tmp'
 	# replace final values (compile time processing)
-	.pipe template require './config/build/settings'
+	.pipe template(require './config/build/settings').on 'error', errorHandler
 	# convert to js
 	.pipe coffeescript(bare: true).on 'error', errorHandler
 	# save 
@@ -53,30 +56,40 @@ watch = ->
 
 # error handler
 errorHandler= (err)->
+	err ?= {}
 	# get error line
 	expr = /:(\d+):(\d+):/.exec err.stack
+	code = err.code || err.source
 	if expr
 		line = parseInt expr[1]
 		col = parseInt expr[2]
-		code = err.code?.split("\n")[line-3 ... line + 3].join("\n")
+		code = code?.split("\n")[line-3 ... line + 3].join("\n")
 	else
-		code = line = col = '??'
+		line = col = '??'
+		# save code to tmp file
+		if code
+			fs.writeFileSync 'tmp/err-code.tmp', code
+			code = './tmp/err-code.tmp'
 	# Render
 	table = new cliTable()
-	table.push {Name: err.name},
-		{Filename: err.filename},
-		{Message: err.message},
-		{Line: line},
-		{Col: col}
-	console.error table.toString()
-	console.log '\x1b[31mStack:'
-	console.error '\x1b[0m┌─────────────────────────────────────────────────────────────────────────────────────────┐'
-	console.error '\x1b[34m', err.stack
-	console.log '\x1b[0m└─────────────────────────────────────────────────────────────────────────────────────────┘'
-	console.log '\x1b[31mCode:'
-	console.error '\x1b[0m┌─────────────────────────────────────────────────────────────────────────────────────────┐'
-	console.error '\x1b[34m', code
-	console.log '\x1b[0m└─────────────────────────────────────────────────────────────────────────────────────────┘'
+	table.push {Name: err.name || ''},
+		{plugin: err.plugin}
+		{Filename: err.filename || err.fileName || '??'},
+		{Message: err.message || ''},
+		{Line: line || ''},
+		{Col: col || ''}
+	console.log """
+	\x1b[0m───────────────────────────────────────────────────────────────────────────────────────────
+	#{table.toString()}
+	\x1b[0m┌─────────────────────────────────────────────────────────────────────────────────────────┐
+	\x1b[31mStack:
+	\x1b[34m#{err.stack}
+	\x1b[0m└─────────────────────────────────────────────────────────────────────────────────────────┘
+	\x1b[31mCode:
+	\x1b[0m┌─────────────────────────────────────────────────────────────────────────────────────────┐
+	\x1b[34m#{code}
+	\x1b[0m└─────────────────────────────────────────────────────────────────────────────────────────┘
+	"""
 	return
 
 # default task

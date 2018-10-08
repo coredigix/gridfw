@@ -19,25 +19,13 @@ Object.defineProperties GridFW.prototype,
 			else
 				rawPath = url.substr 0, i
 				rawUrlQuery = url.substr i + 1
-			# locals
-			locals = Object.create @locals,
-				ctx: value: ctx
 			# basic ctx attributes
 			Object.defineProperties ctx,
-				app: value: this
-				s: value: settings
 				req: value: req
 				res: value: ctx
 				# url
 				method: value: method
 				url: value: req.url
-				# locals
-				locals: value: locals
-				data: value: locals
-				# render
-				view: UNDEFINED
-				# content length (use for monitoring)
-				contentLength: UNDEFINED
 			# add to request
 			Object.defineProperties req,
 				res: value: ctx

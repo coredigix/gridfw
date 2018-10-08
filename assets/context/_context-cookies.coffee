@@ -1,5 +1,5 @@
 
-Object.defineProperties Context.prototype,
+Object.defineProperties CONTEXT_PROTO,
 	###*
 	 * 
 	###

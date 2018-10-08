@@ -5,25 +5,24 @@ path = require 'path'
 fs	 = require 'mz/fs'
 LRUCache	= require 'lru-cache'
 
-PKG			= require '../../package.json'
-Context		= require '../context'
-LoggerFactory= require '../lib/logger'
-GError		= require '../lib/error'
-
-RouteMapper	= require '../router/route-mapper'
-RouteNode	= require '../router/route-node'
-
 fastDecode	= require 'fast-decode-uri-component'
 encodeurl	= require 'encodeurl'
 
 compareVersion = require 'compare-versions'
 
+PKG			= require '../../package.json'
+CONTEXT_PROTO= require '../context'
+REQUEST_PROTO= require '../context/request'
+GError		= require '../lib/error'
+
+RouteMapper	= require '../router/route-mapper'
+RouteNode	= require '../router/route-node'
+
+PluginWrapper = require './plugin-wrapper'
+loggerFactory = require '../../gridfw-logger' #TODO change path
+
 # default config
 CONFIG = require './config'
-DEFAULT_SETTINGS = cfg.config
-DEFAULT_SETTINGS_KIES= cfg.kies
-CHECK_SETTINGS= cfg.check
-
 
 # create empty attribute for performance
 UNDEFINED=
@@ -78,6 +77,7 @@ class GridFW
 		locals = Object.create null,
 			app: value: app
 		# create context
+		_createContext this
 		#TODO clone context and response
 		# define properties
 		Object.defineProperties app,
@@ -87,7 +87,7 @@ class GridFW
 			[IS_LOADED]: UNDEFINED
 			[APP_STARTING_PROMISE]: UNDEFINED
 			# mode
-			mode: get: -> @s[<%= settings.mode ?>]
+			mode: get: -> @s[<%=settings.mode %>]
 			### App connection ###
 			server: UNDEFINED
 			protocol: UNDEFINED
@@ -95,7 +95,7 @@ class GridFW
 			port: UNDEFINED
 			path: UNDEFINED
 			# settings
-			s: value: Array DEFAULT_SETTINGS.length
+			s: value: Array CONFIG.config.length
 			# locals
 			locals: value: locals
 			data: value: locals
@@ -110,7 +110,7 @@ class GridFW
 			[STATIC_ROUTES]: value: Object.create null
 			[DYNAMIC_ROUTES]: value: Object.create null
 			#TODO check if app cache optimise performance for 20 routes
-			# [CACHED_ROUTES]: new LRUCache max: options.routeCache || DEFAULT_SETTINGS.routeCacheMax
+			# [CACHED_ROUTES]:
 			# plugins
 			[PLUGINS]: value: Object.create null
 		# process off listener
@@ -118,8 +118,6 @@ class GridFW
 		process.on 'SIGINT', exitCb
 		process.on 'SIGTERM', exitCb
 		process.on 'beforeExit', exitCb
-		# enable settings
-		await @reload options
 		# print welcome message
 		_console_welcome this
 		return
@@ -143,6 +141,11 @@ Object.defineProperties GridFW,
 	# framework version
 	version: value: PKG.version
 
+# default logger
+loggerFactory GridFW.prototype, level: 'DEBUG'
+
+
+#=include index/_create-context.coffee
 #=include index/_errors.coffee
 #=include index/_log_welcome.coffee
 #=include router/_index.coffee
