@@ -8,6 +8,8 @@ LRUCache	= require 'lru-cache'
 fastDecode	= require 'fast-decode-uri-component'
 encodeurl	= require 'encodeurl'
 
+loggerFactory = require 'gridfw-logger'
+
 compareVersion = require 'compare-versions'
 
 PKG			= require '../../package.json'
@@ -19,7 +21,6 @@ RouteMapper	= require '../router/route-mapper'
 RouteNode	= require '../router/route-node'
 
 PluginWrapper = require './plugin-wrapper'
-loggerFactory = require '../../../gridfw-logger' #TODO change path
 
 # default config
 CONFIG = require './config'
